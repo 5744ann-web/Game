@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0f24">
+<title>งานและกำลัง | Roblox: Power Inc.</title>
+<!--
+  =====================================================================
+  เกม "งานและกำลัง" — ธีม Roblox: Power Inc. (มหาลัยพลังงานป่วน)
+  สำหรับนักเรียน ม.2 | ไฟล์เดียวจบ ไม่ใช้ Library ภายนอก
+  ---------------------------------------------------------------------
+  วิธีแก้ไขเนื้อหา: เลื่อนลงไปที่ <script> ส่วน "1) ข้อมูลเกม"
+    - LEVELS        : ข้อมูลด่านทั้งหมด (แรง ระยะทาง เวลา เป้าหมาย)
+    - SHOP_ITEMS    : ของในร้านค้า
+    - BADGES        : ถ้วยรางวัล / Achievement
+    - AVATAR_OPTIONS: สีและชุดตัวละคร
+    - ARCADE_TYPES  : รูปแบบโจทย์สุ่มในโหมดอาร์เคด
+    - SONGS         : โน้ตเพลงประกอบ Chiptune
+  ข้อมูลผู้เล่นบันทึกไว้ในเบราว์เซอร์ (localStorage) ของเครื่องนั้น
+  =====================================================================
+-->
+<style>
+:root{
+  --bg:#0a0f24;--bg2:#10173a;--panel:#161f47;--panel2:#1f2a5e;--line:#2e3d86;
+  --cyan:#22e3ff;--pink:#ff3fb4;--orange:#ff8a1f;--yellow:#ffd23f;--green:#35f28a;
+  --red:#ff4d5e;--purple:#9b5cff;--text:#f2f5ff;--muted:#a3aedb;--r:14px;
+  --font:"Segoe UI","Leelawadee UI","Noto Sans Thai","Thonburi","Sukhumvit Set",Tahoma,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+input,select{font:inherit;user-select:text;-webkit-user-select:text}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* ---------- แถบด้านบน ---------- */
+#topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;flex-wrap:wrap;
+  background:linear-gradient(180deg,#151d48,#0d1332);border-bottom:2px solid var(--line);z-index:5}
+#topbar.hidden{display:none}
+.brand{font-weight:900;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo-cube{width:26px;height:26px;background:var(--orange);border-radius:6px;transform:rotate(12deg);
+  box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),0 0 12px rgba(255,138,31,.6)}
+.brand small{color:var(--cyan);font-weight:800}
+.nav{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+.nav button{border:2px solid var(--line);background:var(--panel);color:var(--text);font-weight:800;
+  padding:7px 12px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.nav button.on{background:var(--cyan);border-color:var(--cyan);color:#03222b;box-shadow:0 0 14px rgba(34,227,255,.55)}
+.nav .arrow{color:var(--muted);align-self:center;font-weight:900}
+.tb-right{display:flex;gap:6px;align-items:center}
+.pill{background:#0b1030;border:2px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:800;white-space:nowrap}
+.icon-btn{border:2px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;
+  padding:6px 10px;cursor:pointer;font-weight:800;white-space:nowrap}
+.icon-btn:hover,.nav button:hover{filter:brightness(1.2)}
+
+main{flex:1;position:relative;min-height:0}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:12px;display:none}
+.screen.active{display:block;animation:scrIn .45s ease}
+@keyframes scrIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+
+/* ---------- ปุ่มสไตล์ Roblox ---------- */
+.btn{border:none;border-radius:12px;padding:10px 16px;cursor:pointer;font-weight:800;color:#05230f;
+  background:var(--green);box-shadow:0 4px 0 #0f9a50;transition:transform .08s,box-shadow .08s,filter .15s;
+  touch-action:manipulation;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0f9a50}
+.btn:disabled{filter:grayscale(.85) brightness(.65);cursor:not-allowed}
+.btn.orange{background:var(--orange);box-shadow:0 4px 0 #b05504;color:#2a1300}
+.btn.cyan{background:var(--cyan);box-shadow:0 4px 0 #0a93a8;color:#032027}
+.btn.pink{background:var(--pink);box-shadow:0 4px 0 #a51c6f;color:#fff}
+.btn.yellow{background:var(--yellow);box-shadow:0 4px 0 #b08d0c;color:#2a2000}
+.btn.ghost{background:var(--panel2);box-shadow:0 4px 0 #080c26;color:var(--text)}
+.btn.big{font-size:1.15rem;padding:13px 22px}
+.btn.sm{padding:6px 10px;font-size:.9rem}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:var(--r);padding:12px}
+.card h4{font-size:1rem;margin-bottom:8px;color:var(--cyan)}
+.muted{color:var(--muted)}
+
+/* ---------- Splash ---------- */
+#scr-splash{display:none;place-items:center;text-align:center;
+  background:radial-gradient(circle at 50% 30%,#3a1d8a 0%,#0a0f24 65%)}
+#scr-splash.active{display:grid}
+.splash-box{max-width:620px;padding:20px}
+.big-cube{width:96px;height:96px;margin:0 auto 18px;background:var(--orange);border-radius:18px;
+  animation:spin 3s linear infinite;box-shadow:inset -10px -10px 0 rgba(0,0,0,.25),0 0 40px rgba(255,138,31,.7)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.neon{font-weight:900;color:#fff;letter-spacing:1px;
+  text-shadow:0 0 6px var(--pink),0 0 16px var(--pink),0 0 34px var(--pink);animation:flicker 5s infinite}
+.neon.cy{text-shadow:0 0 6px var(--cyan),0 0 16px var(--cyan),0 0 34px var(--cyan)}
+@keyframes flicker{0%,92%,100%{opacity:1}93%{opacity:.4}95%{opacity:1}96%{opacity:.6}}
+.splash-title{font-size:clamp(34px,8vw,64px);line-height:1.1}
+.splash-sub{font-size:clamp(16px,3.5vw,22px);margin:10px 0 24px;color:var(--yellow);font-weight:800}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+/* ---------- Lobby ---------- */
+#scr-lobby{background:
+  radial-gradient(ellipse at 50% -10%,rgba(155,92,255,.45),transparent 60%),
+  repeating-linear-gradient(90deg,#18214f 0 76px,#0f1638 76px 82px),var(--bg)}
+.lobby-head{text-align:center;margin:4px 0 12px}
+.lobby-head h1{font-size:clamp(24px,4.5vw,40px)}
+.lobby-head p{color:var(--muted);font-weight:700}
+.lobby-grid{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:12px;max-width:1150px;margin:0 auto}
+.avatar-stage{position:relative;background:linear-gradient(180deg,#1b2360,#0e1438);border:2px solid var(--line);
+  border-radius:var(--r);overflow:hidden}
+#avatarCanvas{display:block;width:100%;aspect-ratio:5/6}
+.locker-tag{position:absolute;top:8px;left:8px;background:#0008;padding:3px 8px;border-radius:8px;font-weight:800;font-size:.85rem}
+.cust-row{margin:8px 0}
+.cust-row label{display:block;font-weight:800;font-size:.9rem;margin-bottom:5px}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:34px;height:34px;border-radius:9px;border:3px solid #0006;cursor:pointer;box-shadow:0 3px 0 #0008}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--cyan),0 3px 0 #0008}
+.opt{border:2px solid var(--line);background:var(--panel2);color:var(--text);padding:6px 10px;border-radius:9px;
+  font-weight:800;cursor:pointer;font-size:.88rem}
+.opt.on{background:var(--yellow);color:#2a2000;border-color:var(--yellow)}
+.opt.locked{opacity:.5}
+.profile-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.profile-row input,.profile-row select{flex:1;min-width:120px;background:#0b1030;border:2px solid var(--line);color:var(--text);
+  border-radius:10px;padding:9px 10px;font-weight:700}
+.jobs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.job{border:3px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;background:var(--panel2);
+  transition:transform .15s,border-color .15s;position:relative;text-align:left;color:var(--text)}
+.job:hover{transform:translateY(-3px)}
+.job.on{border-color:var(--yellow);box-shadow:0 0 20px rgba(255,210,63,.35)}
+.job .ji{font-size:2rem}
+.job b{display:block;font-size:1.05rem;margin:4px 0}
+.job p{font-size:.88rem;color:var(--muted)}
+.job .perk{display:inline-block;margin-top:6px;font-size:.8rem;font-weight:800;background:#0b1030;padding:3px 8px;border-radius:8px;color:var(--green)}
+.job.on::after{content:"✔ เลือกแล้ว";position:absolute;top:8px;right:10px;font-weight:900;color:var(--yellow);font-size:.8rem}
+.lobby-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end}
+.story-box{border-left:5px solid var(--orange);background:#0b1030aa;padding:10px 12px;border-radius:10px;font-weight:600;line-height:1.55}
+
+/* ---------- Factory ---------- */
+.fac-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.track-tabs{display:flex;gap:6px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;flex:1;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:2px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:6px 10px;
+  cursor:pointer;font-weight:800;font-size:.85rem;text-align:left}
+.chip small{display:block;color:var(--yellow);font-size:.75rem}
+.chip.on{border-color:var(--cyan);background:#0f3550}
+.chip.lock{opacity:.45;cursor:not-allowed}
+.fac-grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:10px;align-items:start}
+.stage-col{min-width:0}
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:6px}
+.stat{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:5px 9px;min-width:0}
+.stat span{display:block;font-size:.75rem;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{font-size:1.15rem}
+.minibar{height:6px;background:#0b1030;border-radius:4px;overflow:hidden;margin-top:3px}
+.minibar i{display:block;height:100%;width:100%;background:var(--green);transition:background .3s}
+.stage-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--r);overflow:hidden;
+  border:3px solid var(--line);background:#050816;box-shadow:0 0 24px rgba(34,227,255,.15)}
+#game{display:block;width:100%;height:100%;touch-action:none}
+.fps{position:absolute;right:6px;top:6px;font-size:.7rem;background:#0008;padding:2px 6px;border-radius:6px;color:var(--green);font-weight:800;pointer-events:none}
+.meters{display:grid;grid-template-columns:1.6fr repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.meter{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:5px 9px;min-width:0}
+.meter span{display:block;font-size:.72rem;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter b{font-size:1.05rem;white-space:nowrap}
+.meter small{display:block;font-size:.7rem;color:var(--yellow);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ebar{position:relative;height:16px;background:#0b1030;border-radius:8px;overflow:hidden;border:2px solid #000;margin:3px 0}
+.ebar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));
+  background-size:300px 100%}
+.ebar em{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff;box-shadow:0 0 6px #fff;display:none}
+.ctrl{display:flex;flex-direction:column;gap:8px;max-height:calc(100dvh - 140px);overflow-y:auto;padding-right:2px}
+.lv-title{font-size:1.15rem;font-weight:900;color:var(--yellow)}
+.story{font-size:.92rem;line-height:1.55;margin-top:4px}
+.goal-box{margin-top:8px;background:#0b1030;border:2px dashed var(--orange);border-radius:10px;padding:8px;font-weight:800}
+.given li{list-style:none;padding:3px 0;border-bottom:1px dashed var(--line);font-size:.92rem;display:flex;justify-content:space-between;gap:8px}
+.given li b{color:var(--cyan);white-space:nowrap}
+.slider-row{margin:6px 0 10px}
+.slider-row .sr-top{display:flex;justify-content:space-between;font-weight:800;margin-bottom:4px}
+.slider-row .sr-top b{color:var(--yellow);font-size:1.1rem}
+.slider-line{display:flex;gap:6px;align-items:center}
+.slider-line input{flex:1;accent-color:var(--orange);height:28px}
+.step-btn{width:38px;height:38px;border-radius:10px;border:none;background:var(--panel2);color:var(--text);font-weight:900;font-size:1.2rem;
+  box-shadow:0 3px 0 #080c26;cursor:pointer;touch-action:manipulation}
+.step-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #080c26}
+.formula{display:flex;gap:6px;flex-wrap:wrap}
+.formula span{background:#0b1030;border:2px solid var(--purple);border-radius:9px;padding:5px 9px;font-weight:800;font-size:.9rem}
+.act-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.act-row .full{grid-column:1/-1}
+#btnHold{touch-action:none}
+#btnHold.holding{background:var(--red);box-shadow:0 1px 0 #9c1c2a;transform:translateY(3px)}
+.hint-box{background:#2a2200;border:2px solid var(--yellow);border-radius:10px;padding:8px;font-weight:700;line-height:1.5;display:none}
+.choice{display:block;width:100%;text-align:left;margin:5px 0;border:2px solid var(--line);background:var(--panel2);color:var(--text);
+  border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer}
+.choice.on{border-color:var(--yellow);background:#3a3000}
+.mtable{width:100%;border-collapse:collapse;font-size:.88rem}
+.mtable td,.mtable th{border-bottom:1px dashed var(--line);padding:4px;text-align:left}
+.kbd-help{font-size:.75rem;color:var(--muted)}
+
+/* ---------- Shop & Arcade ---------- */
+.shop-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;max-width:1200px;margin:0 auto}
+.shop-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.item{background:var(--panel2);border:2px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:6px}
+.item .ic{font-size:2.2rem;text-align:center;background:#0b1030;border-radius:10px;padding:6px}
+.item b{font-size:.98rem}
+.item p{font-size:.8rem;color:var(--muted);flex:1}
+.item .tag{font-size:.72rem;font-weight:800;color:var(--cyan)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.badge{background:var(--panel2);border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center}
+.badge .bi{font-size:1.9rem}
+.badge b{display:block;font-size:.82rem}
+.badge small{font-size:.72rem;color:var(--muted)}
+.badge.lock{filter:grayscale(1);opacity:.45}
+.badge.got{border-color:var(--yellow);box-shadow:0 0 12px rgba(255,210,63,.3)}
+.arc-q{font-size:1.15rem;font-weight:800;min-height:3.2em;line-height:1.45;margin:10px 0}
+.arc-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.arc-choices .btn{white-space:normal}
+.arc-bar{height:12px;background:#0b1030;border-radius:6px;overflow:hidden;margin-top:8px}
+.arc-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--pink),var(--cyan))}
+.lb{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:6px}
+.lb th,.lb td{padding:5px;border-bottom:1px solid var(--line);text-align:left}
+.lb tr.me td{color:var(--yellow);font-weight:800}
+
+/* ---------- Modal / Toast / Transition ---------- */
+.modal{position:fixed;inset:0;background:rgba(3,6,20,.72);display:none;place-items:center;z-index:40;padding:12px}
+.modal.show{display:grid;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}}
+.modal-card{background:var(--panel);border:3px solid var(--line);border-radius:18px;padding:16px;width:min(640px,100%);
+  max-height:92dvh;overflow:auto;animation:pop .3s cubic-bezier(.2,1.6,.4,1)}
+.modal-card.wide{width:min(980px,100%)}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+.res-title{font-size:1.7rem;font-weight:900;text-align:center}
+.res-title.ok{color:var(--green)}.res-title.bad{color:var(--red)}
+.stars{font-size:2.2rem;text-align:center;letter-spacing:4px;color:var(--yellow);text-shadow:0 0 10px rgba(255,210,63,.6)}
+.stars .off{color:#3a4170;text-shadow:none}
+.explain{background:#0b1030;border-radius:12px;padding:10px 12px;margin:10px 0;line-height:1.7}
+.explain b{color:var(--yellow)}
+.reward{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.reward span{background:#0b1030;border:2px solid var(--yellow);padding:5px 10px;border-radius:999px;font-weight:800}
+.tip{font-size:.9rem;color:var(--muted);border-left:4px solid var(--cyan);padding-left:8px;margin:8px 0}
+.m-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.dash-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:10px 0}
+.dash-cards div{background:#0b1030;border:2px solid var(--line);border-radius:12px;padding:8px}
+.dash-cards span{display:block;font-size:.75rem;color:var(--muted);font-weight:700}
+.dash-cards b{font-size:1.25rem}
+.table-wrap{overflow-x:auto}
+#toasts{position:fixed;top:64px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:60;pointer-events:none;max-width:min(320px,calc(100vw - 24px))}
+.toast{background:var(--panel2);border:2px solid var(--yellow);border-radius:12px;padding:10px 12px;font-weight:800;
+  box-shadow:0 6px 20px #0008;animation:tIn .35s cubic-bezier(.2,1.5,.4,1)}
+.toast.info{border-color:var(--cyan)}
+@keyframes tIn{from{transform:translateX(120%)}}
+#trans{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.tr-panel{position:absolute;top:-10%;bottom:-10%;width:56%;transition:transform .38s cubic-bezier(.7,0,.3,1)}
+.tr-panel.p1{left:-4%;background:repeating-linear-gradient(45deg,var(--orange) 0 26px,#e07410 26px 52px);transform:translateX(-135%) skewX(-8deg)}
+.tr-panel.p2{right:-4%;background:repeating-linear-gradient(45deg,var(--purple) 0 26px,#7d40e0 26px 52px);transform:translateX(135%) skewX(-8deg)}
+#trans.on .tr-panel{transform:translateX(0) skewX(-8deg)}
+.tr-logo{position:absolute;inset:0;display:grid;place-content:center;text-align:center;opacity:0;transition:opacity .2s;gap:10px;padding:20px}
+#trans.on .tr-logo{opacity:1;transition-delay:.2s}
+.tr-spin{width:60px;height:60px;margin:0 auto;background:#fff;border-radius:12px;animation:spin .8s linear infinite;box-shadow:inset -6px -6px 0 rgba(0,0,0,.2)}
+.tr-logo b{font-size:2rem;font-weight:900;color:#fff;text-shadow:0 4px 0 #0006}
+.tr-logo small{font-weight:800;color:#fff;max-width:520px;text-shadow:0 2px 0 #0008;font-size:1rem}
+
+/* ---------- Responsive ---------- */
+@media (min-width:1001px){
+  .stage-col{max-width:calc((100dvh - 290px) * 16 / 9);min-width:min(560px,100%);justify-self:center;width:100%}
+}
+@media (max-width:1000px){
+  .fac-grid{grid-template-columns:1fr}
+  .ctrl{max-height:none;overflow:visible}
+}
+@media (max-width:760px){
+  .lobby-grid,.shop-grid{grid-template-columns:1fr}
+  .avatar-stage{max-width:320px;margin:0 auto;width:100%}
+  .meters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .meters .energy{grid-column:1/-1}
+  .hud{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lg,.nav .arrow{display:none}
+  #topbar{flex-wrap:nowrap;gap:4px;padding:6px 6px}
+  .brand{display:none}
+  .nav{min-width:0}
+  .nav{gap:4px;flex-wrap:nowrap}
+  .nav button{padding:5px 6px;font-size:.78rem}
+  .pill{padding:4px 8px;font-size:.85rem}.icon-btn{padding:5px 7px}
+  .hud{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  .stat{padding:3px 6px}.stat span{font-size:.62rem}.stat b{font-size:.95rem}
+  .stage-wrap{position:sticky;top:-8px;z-index:3}
+  .meters{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  .meter{padding:3px 6px}.meter span{font-size:.62rem}.meter b{font-size:.85rem}.meter small{font-size:.6rem}
+  .ebar{height:12px}
+  #toasts{top:auto;bottom:12px}
+}
+@media (max-width:420px){
+  .jobs{grid-template-columns:1fr}
+  .arc-choices{grid-template-columns:1fr}
+  .screen{padding:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ===== แถบเมนูด้านบน ===== -->
+  <header id="topbar" class="hidden">
+    <div class="brand"><div class="logo-cube"></div><span class="lg">Power Inc. <small>งานและกำลัง</small></span></div>
+    <nav class="nav">
+      <button data-go="lobby">🏢 <span class="lg">1 </span>ล็อบบี้</button><span class="arrow">➜</span>
+      <button data-go="factory">🏭 <span class="lg">2 </span>โรงงาน</button><span class="arrow">➜</span>
+      <button data-go="shop">🛒 <span class="lg">3 </span>ร้าน<span class="lg"> &amp; อาร์เคด</span></button>
+    </nav>
+    <div class="tb-right">
+      <span class="pill" title="Power Coins">🪙 <span id="tbCoins">0</span></span>
+      <button class="icon-btn" id="btnDash" title="Dashboard สถิติ">📊<span class="lg"> สถิติ</span></button>
+      <button class="icon-btn" id="btnSound" title="เปิด/ปิดเสียง (M)">🔊</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== หน้าเริ่มต้น ===== -->
+    <section class="screen active" id="scr-splash">
+      <div class="splash-box">
+        <div class="big-cube"></div>
+        <h1 class="neon splash-title">POWER INC.</h1>
+        <div class="splash-sub">มหาลัยพลังงานป่วน · เกม “งานและกำลัง” ม.2</div>
+        <button class="btn orange big pulse" id="btnStart">▶ แตะเพื่อเข้างาน!</button>
+        <p class="muted" style="margin-top:16px;font-weight:700">แนะนำให้เปิดเสียง 🔊 · เล่นได้ทั้งคอมพิวเตอร์และมือถือ</p>
+      </div>
+    </section>
+
+    <!-- ===== ฉากที่ 1: ล็อบบี้ ===== -->
+    <section class="screen" id="scr-lobby">
+      <div class="lobby-head">
+        <h1 class="neon">THE ROBLOX WORKER LOBBY</h1>
+        <p>ห้องโถงเลือกสายงาน · แต่งตัวที่ตู้ล็อกเกอร์ แล้วเลือกกะทำงานวันนี้!</p>
+      </div>
+      <div class="lobby-grid">
+        <div>
+          <div class="avatar-stage">
+            <canvas id="avatarCanvas" width="300" height="360" aria-label="ตัวละครของคุณ"></canvas>
+            <span class="locker-tag">🔐 ตู้ล็อกเกอร์ของ <span id="lockerName"></span></span>
+          </div>
+          <div class="card" style="margin-top:10px" id="custBox"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <h4>👷 บัตรพนักงาน</h4>
+            <div class="profile-row">
+              <select id="profileSel" aria-label="เลือกผู้เล่น"></select>
+            </div>
+            <div class="profile-row" style="margin-top:6px">
+              <input id="nameInput" maxlength="20" placeholder="พิมพ์ชื่อนักเรียน เช่น ด.ญ.มะลิ ม.2/3" aria-label="ชื่อผู้เล่น">
+              <button class="btn cyan sm" id="btnName">✔ ใช้ชื่อนี้</button>
+            </div>
+            <p class="muted" style="font-size:.8rem;margin-top:6px">พิมพ์ชื่อใหม่ = สร้างผู้เล่นใหม่ · สลับผู้เล่นเพื่อแข่งกับเพื่อนบนเครื่องเดียวกันได้</p>
+          </div>
+          <div class="card">
+            <div class="story-box">📢 <b>ประกาศด่วน!</b> บริษัท Power Inc. กำลังขาดแคลนแรงงานอย่างหนัก!
+              คุณคือ “วิศวกรตัวจิ๋ว” พนักงานใหม่ที่ต้องผลัก ลาก และยกพัสดุ โดยคำนวณ <b>แรง (F)</b> <b>ระยะทาง (s)</b>
+              และ <b>เวลา (t)</b> ให้ถูกต้อง เพื่อพิชิตภารกิจในโรงงานสุดป่วน</div>
+            <div class="jobs" id="jobs"></div>
+            <div class="lobby-cta">
+              <button class="btn ghost" data-go="shop">🛒 ไปร้านค้า</button>
+              <button class="btn orange big" id="btnShift">🏭 เข้ากะทำงาน!</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ฉากที่ 2: โรงงาน ===== -->
+    <section class="screen" id="scr-factory">
+      <div class="fac-top">
+        <div class="track-tabs" id="trackTabs"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="fac-grid">
+        <div class="stage-col">
+          <!-- ส่วนแสดงข้อมูลผู้เล่น -->
+          <div class="hud">
+            <div class="stat"><span>⏱️ เวลากะที่เหลือ</span><b id="hudTime">0</b><div class="minibar"><i id="hudTimeBar"></i></div></div>
+            <div class="stat"><span>⭐ คะแนนรวม</span><b id="hudScore">0</b></div>
+            <div class="stat"><span>🪙 Power Coins</span><b id="hudCoins">0</b></div>
+            <div class="stat"><span>🔥 ตอบกำลังถูกติดกัน</span><b id="hudStreak">0</b></div>
+          </div>
+          <!-- ส่วนแสดงผลเกมหลัก -->
+          <div class="stage-wrap" id="stageWrap">
+            <canvas id="game" aria-label="ฉากโรงงาน"></canvas>
+            <div class="fps" id="fps">FPS</div>
+          </div>
+          <div class="meters">
+            <div class="meter energy"><span>⚡ หลอดพลังงาน = แรง F</span><div class="ebar"><i id="eFill"></i><em id="eFric" title="แรงเสียดทาน"></em></div><b id="mF">0 N</b></div>
+            <div class="meter"><span id="mSl">📏 ระยะทาง s</span><b id="mS">0 m</b></div>
+            <div class="meter"><span>⏱️ นาฬิกาจับเวลา t</span><b id="mT">0.0 s</b></div>
+            <div class="meter"><span>🛠️ งาน W</span><b id="mW">0 J</b><small id="mWg"></small></div>
+            <div class="meter"><span>🚀 กำลัง P</span><b id="mP">0 W</b><small id="mPg"></small></div>
+          </div>
+        </div>
+        <!-- ส่วนควบคุม -->
+        <aside class="ctrl" id="ctrl"></aside>
+      </div>
+    </section>
+
+    <!-- ===== ฉากที่ 3: ร้านค้า & อาร์เคด ===== -->
+    <section class="screen" id="scr-shop">
+      <div class="lobby-head"><h1 class="neon cy">ROBUX ENERGY SHOP &amp; LAB</h1>
+        <p>แลก Power Coins เป็นของอัปเกรด · แข่งคิดเร็วในอาร์เคด · สะสมถ้วยรางวัล</p></div>
+      <div class="shop-grid">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <div class="shop-head"><h4 style="margin:0">🛍️ Robux Energy Shop</h4><span class="pill">🪙 <span id="shopCoins">0</span></span></div>
+            <div class="items" id="items"></div>
+          </div>
+          <div class="card"><h4>🏆 ถ้วยรางวัล (Badges)</h4><div class="badges" id="badges"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" id="arcade">
+            <h4>🕹️ Power Arcade: ศึกคิดเร็ว 60 วินาที</h4>
+            <div id="arcIdle">
+              <p style="line-height:1.6">ตอบโจทย์ <b>งาน</b> และ <b>กำลัง</b> ให้ได้มากที่สุดใน 60 วินาที! ตอบถูกได้ 2 🪙 ตอบติดกันได้โบนัส
+                ผลัดกันเล่นกับเพื่อนแล้วดูอันดับในตารางคะแนนด้านล่าง</p>
+              <button class="btn pink big" id="btnArcade" style="margin-top:10px">▶ เริ่มแข่ง!</button>
+            </div>
+            <div id="arcPlay" style="display:none">
+              <div style="display:flex;justify-content:space-between;font-weight:900"><span>✅ <span id="arcScore">0</span> ข้อ</span><span>🔥 x<span id="arcCombo">0</span></span><span>⏱️ <span id="arcTime">60</span> s</span></div>
+              <div class="arc-bar"><i id="arcBar"></i></div>
+              <div class="arc-q" id="arcQ"></div>
+              <div class="arc-choices" id="arcChoices"></div>
+            </div>
+          </div>
+          <div class="card"><h4>📋 ตารางคะแนนอาร์เคด (เพื่อนในเครื่องนี้)</h4><div class="table-wrap" id="board"></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="trans"><div class="tr-panel p1"></div><div class="tr-panel p2"></div>
+  <div class="tr-logo"><div class="tr-spin"></div><b>POWER INC.</b><small id="trText"></small></div></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-card" id="modalCard"></div></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   1) ข้อมูลเกม — แก้ไขเนื้อหาได้ที่ส่วนนี้
+   ===================================================================== */
+
+/** ค่าความเร่งเนื่องจากแรงโน้มถ่วง (m/s²) หลักสูตร ม.2 ใช้ 10 */
+const G = 10;
+
+/** สายงานที่เลือกได้ในล็อบบี้ (track ต้องตรงกับ LEVELS[].track) */
+const JOBS = {
+  work:  { icon: '💪', name: 'สายจอมพลัง (Work Master)', desc: 'ลากของหนัก ระยะทางไกล ยกพัสดุขึ้นที่สูง ฝึกคำนวณ “งาน” W = F × s', perk: 'เหรียญ +25% ในด่านงาน' },
+  power: { icon: '⚡', name: 'สายสปีดดี้ (Power Racer)', desc: 'ขนส่งให้ทันเวลา แข่งเครื่องจักร ฝึกคำนวณ “กำลัง” P = W ÷ t', perk: 'เหรียญ +25% ในด่านกำลัง' }
+};
+
+/** ชนิดพื้นผิว (ใช้แสดงผล) — ค่าสัมประสิทธิ์แรงเสียดทาน (mu) กำหนดในแต่ละด่าน */
+const SURFACES = {
+  metal: { name: 'พื้นเหล็กโรงงาน' },
+  rough: { name: 'พื้นยางขรุขระ' },
+  oil:   { name: 'พื้นน้ำมันลื่นปรื๊ด' }
+};
+
+/**
+ * LEVELS: ข้อมูลด่านทั้งหมด
+ *  id      : รหัสด่าน (ห้ามซ้ำ)
+ *  track   : 'work' (สายงาน) หรือ 'power' (สายกำลัง)
+ *  mode    : 'push' ผลักกล่องบนพื้น | 'lift' ยกกล่องขึ้นแนวดิ่ง (F = m×g) | 'race' แข่งเครื่องจักร (เลือกคำตอบ)
+ *  mass    : มวลกล่อง (kg) | mu : สัมประสิทธิ์แรงเสียดทาน (เฉพาะ push) → แรงเสียดทาน f = mu × m × g
+ *  vars    : ตัวแปรในด่าน F (N), s (m), h (m), t (s)
+ *            { fixed: ค่า }  = โจทย์กำหนดให้
+ *            { min, max, step, start } = ผู้เล่นปรับเองด้วยแถบเลื่อน
+ *  goal    : เป้าหมาย { W: จูล } และ/หรือ { P: วัตต์ } ต้องได้ค่าตรงเป้า
+ *  tShow   : (ด่านงาน) เวลาที่ใช้แสดงบนนาฬิกาเพื่อคำนวณกำลังเป็นความรู้เสริม
+ *  time    : เวลากะ (วินาที) ที่ให้คิดในแต่ละรอบ | reward : เหรียญเมื่อผ่านครั้งแรก
+ *  machine : true = ใช้เสียง/เอฟเฟกต์เครื่องจักร Vroom!
+ *  hint    : คำใบ้แบบละเอียด | tip : เกร็ดความรู้หลังจบด่าน
+ *  (race)  machines: [{name, desc, W, t}] , choices: [{text, correct}]
+ */
+const LEVELS = [
+  // ---------------- สายจอมพลัง: งาน (Work) ----------------
+  { id: 'w1', track: 'work', mode: 'push', name: 'วันแรกของเด็กใหม่', surface: 'metal', boxColor: '#ff8a1f',
+    story: 'หัวหน้าสั่งให้ผลักกล่องพัสดุไปที่สายพานซึ่งอยู่ห่างออกไป 10 เมตร โดยต้องทำงานให้ได้ 800 จูลพอดี ระวัง! ถ้าแรงน้อยกว่าแรงเสียดทาน กล่องจะไม่ขยับ',
+    mass: 20, mu: 0.25, vars: { F: { min: 0, max: 200, step: 10, start: 20 }, s: { fixed: 10 } },
+    goal: { W: 800 }, tShow: 4, time: 90, reward: 40,
+    hint: 'จาก W = F × s จะได้ F = W ÷ s = 800 ÷ 10 = ? (และต้องมากกว่าแรงเสียดทาน 0.25 × 20 × 10 = 50 N)',
+    tip: 'งาน (W) คือผลคูณของแรงกับระยะทางที่วัตถุเคลื่อนที่ไปตามแนวแรง มีหน่วยเป็นจูล (J) หรือนิวตัน·เมตร' },
+
+  { id: 'w2', track: 'work', mode: 'push', name: 'พื้นยางขรุขระ', surface: 'rough', boxColor: '#35f28a',
+    story: 'ช่องทางนี้ปูพื้นยางขรุขระ แรงเสียดทานสูงมาก! เครื่องดันของคุณออกแรงได้ 200 N คงที่ ต้องดันไปไกลกี่เมตรจึงทำงานได้ 3,000 จูล',
+    mass: 30, mu: 0.5, vars: { F: { fixed: 200 }, s: { min: 1, max: 30, step: 1, start: 5 } },
+    goal: { W: 3000 }, tShow: 6, time: 90, reward: 45,
+    hint: 's = W ÷ F = 3000 ÷ 200 = ?',
+    tip: 'พื้นผิวขรุขระมีแรงเสียดทานมาก ต้องออกแรงมากขึ้นกว่าวัตถุจะเริ่มเคลื่อนที่' },
+
+  { id: 'w3', track: 'work', mode: 'push', name: 'พื้นน้ำมันลื่นปรื๊ด', surface: 'oil', boxColor: '#22e3ff',
+    story: 'น้ำมันรั่วเต็มพื้น! แรงเสียดทานเหลือน้อยนิด ภารกิจคือทำงานให้ได้ 1,200 จูล เลือกแรงและระยะทางเองได้เลย (มีหลายคำตอบที่ถูก!)',
+    mass: 40, mu: 0.05, vars: { F: { min: 0, max: 150, step: 5, start: 10 }, s: { min: 1, max: 30, step: 1, start: 5 } },
+    goal: { W: 1200 }, tShow: 5, time: 120, reward: 50,
+    hint: 'แรงเสียดทาน = 0.05 × 40 × 10 = 20 N เลือก F ที่มากกว่า 20 N แล้วหา s = 1200 ÷ F เช่น F = 100 N → s = 12 m',
+    tip: 'น้ำมันช่วยลดแรงเสียดทาน วัตถุจึงเคลื่อนที่ได้ง่ายขึ้น แต่งานยังคิดจาก W = F × s เหมือนเดิม' },
+
+  { id: 'w4', track: 'work', mode: 'lift', name: 'ยกพัสดุขึ้นชั้นลอย', boxColor: '#ff3fb4',
+    story: 'ต้องดึงเชือกรอกยกกล่อง 25 kg ขึ้นชั้นลอย แรงที่ใช้ยกเท่ากับน้ำหนักกล่อง (m × g) ต้องยกสูงกี่เมตรจึงทำงานได้ 1,500 จูล',
+    mass: 25, vars: { h: { min: 1, max: 12, step: 0.5, start: 2 } },
+    goal: { W: 1500 }, tShow: 5, time: 100, reward: 50,
+    hint: 'F = m × g = 25 × 10 = 250 N แล้ว h = W ÷ F = 1500 ÷ 250 = ?',
+    tip: 'การยกวัตถุขึ้นตรงๆ ด้วยความเร็วคงที่ ต้องออกแรงเท่ากับน้ำหนัก (mg) งานที่ทำ W = mgh' },
+
+  { id: 'w5', track: 'work', mode: 'push', name: 'กับดักแรงน้อย', surface: 'metal', boxColor: '#9b5cff',
+    story: 'กล่องเหล็ก 50 kg หนักมาก! ต้องผลักไป 8 เมตร ให้ได้งาน 2,400 จูล ถ้าแรงน้อยกว่าแรงเสียดทาน งานจะเป็นศูนย์ทันที',
+    mass: 50, mu: 0.4, vars: { F: { min: 0, max: 400, step: 10, start: 150 }, s: { fixed: 8 } },
+    goal: { W: 2400 }, tShow: 6, time: 100, reward: 55,
+    hint: 'F = W ÷ s = 2400 ÷ 8 = ? (ตรวจด้วยว่ามากกว่าแรงเสียดทาน 0.4 × 50 × 10 = 200 N)',
+    tip: 'ถ้าออกแรงแล้ววัตถุไม่เคลื่อนที่ (s = 0) งานที่ทำจะเป็น 0 J แม้จะเหนื่อยแค่ไหนก็ตาม!' },
+
+  { id: 'w6', track: 'work', mode: 'lift', name: 'เครนยักษ์ถล่มโกดัง', boxColor: '#ffd23f',
+    story: 'บอสสายจอมพลัง! ยกตู้สินค้า 80 kg ขึ้นชั้นบนสุด ให้ได้งาน 8,000 จูลพอดี',
+    mass: 80, vars: { h: { min: 1, max: 15, step: 1, start: 3 } },
+    goal: { W: 8000 }, tShow: 8, time: 100, reward: 80,
+    hint: 'F = 80 × 10 = 800 N → h = 8000 ÷ 800 = ?',
+    tip: 'ยิ่งยกสูง หรือยกของหนัก งานที่ทำยิ่งมาก (W = mgh)' },
+
+  // ---------------- สายสปีดดี้: กำลัง (Power) ----------------
+  { id: 'p1', track: 'power', mode: 'push', machine: true, name: 'สายพานด่วนพิเศษ', surface: 'metal', boxColor: '#22e3ff',
+    story: 'ลูกค้ารอพัสดุด่วน! ผลักด้วยแรง 100 N ไป 12 m โดยต้องมีกำลัง 300 วัตต์พอดี ต้องใช้เวลากี่วินาที',
+    mass: 20, mu: 0.2, vars: { F: { fixed: 100 }, s: { fixed: 12 }, t: { min: 1, max: 12, step: 0.5, start: 8 } },
+    goal: { P: 300 }, time: 100, reward: 50,
+    hint: 'W = F × s = 100 × 12 = 1200 J แล้ว t = W ÷ P = 1200 ÷ 300 = ?',
+    tip: 'กำลัง (P) คืออัตราการทำงาน หรืองานที่ทำได้ใน 1 วินาที มีหน่วยเป็นวัตต์ (W) = จูล/วินาที' },
+
+  { id: 'p2', track: 'power', mode: 'lift', machine: true, name: 'ลิฟต์ส่งของเร่งด่วน', boxColor: '#ff8a1f',
+    story: 'มอเตอร์ลิฟต์ยกกล่อง 30 kg ขึ้นสูง 8 m มอเตอร์ต้องทำงานที่กำลัง 400 วัตต์พอดี ตั้งเวลาให้ถูก!',
+    mass: 30, vars: { h: { fixed: 8 }, t: { min: 1, max: 15, step: 1, start: 10 } },
+    goal: { P: 400 }, time: 100, reward: 55,
+    hint: 'F = 30 × 10 = 300 N, W = 300 × 8 = 2400 J แล้ว t = 2400 ÷ 400 = ?',
+    tip: 'งานเท่ากัน ถ้าใช้เวลาน้อยลง กำลังจะมากขึ้น' },
+
+  { id: 'p3', track: 'power', mode: 'race', name: 'ศึกหุ่นยนต์ A ปะทะ B',
+    story: 'หุ่นยนต์สองตัวขนพัสดุทำงานเท่ากัน คือ 3,000 J แต่ใช้เวลาไม่เท่ากัน ตัวไหนมีกำลังมากกว่า และมีค่าเท่าใด',
+    machines: [ { name: 'หุ่น A', desc: 'ทำงาน 3,000 J ใช้เวลา 10 s', W: 3000, t: 10, color: '#ff3fb4' },
+                { name: 'หุ่น B', desc: 'ทำงาน 3,000 J ใช้เวลา 15 s', W: 3000, t: 15, color: '#22e3ff' } ],
+    choices: [ { text: 'หุ่น A มีกำลังมากกว่า (300 W)', correct: true },
+               { text: 'หุ่น B มีกำลังมากกว่า (200 W)' },
+               { text: 'เท่ากัน เพราะทำงานเท่ากัน (3,000 W)' },
+               { text: 'หุ่น A มีกำลังมากกว่า (200 W)' } ],
+    time: 90, reward: 50,
+    hint: 'P = W ÷ t → A: 3000 ÷ 10, B: 3000 ÷ 15 แล้วเทียบกัน',
+    tip: 'ทำงานเท่ากัน เครื่องที่ใช้เวลาน้อยกว่าจะมีกำลังมากกว่า' },
+
+  { id: 'p4', track: 'power', mode: 'push', machine: true, name: 'โอเวอร์ไทม์สุดโหด', surface: 'oil', boxColor: '#35f28a',
+    story: 'ผลักกล่องบนพื้นน้ำมันไป 20 m ต้องทำงานได้ 2,000 J และมีกำลัง 500 W พร้อมกัน! ปรับทั้งแรงและเวลา',
+    mass: 60, mu: 0.1, vars: { F: { min: 0, max: 200, step: 10, start: 50 }, s: { fixed: 20 }, t: { min: 1, max: 10, step: 0.5, start: 8 } },
+    goal: { W: 2000, P: 500 }, time: 130, reward: 65,
+    hint: 'F = W ÷ s = 2000 ÷ 20 = 100 N แล้ว t = W ÷ P = 2000 ÷ 500 = ?',
+    tip: 'โจทย์หลายขั้นตอน: หางานก่อน แล้วค่อยนำงานไปหากำลังหรือเวลา' },
+
+  { id: 'p5', track: 'power', mode: 'race', name: 'ศึกรถยกถล่มโรงงาน',
+    story: 'รถยก A ยกกล่อง 50 kg สูง 4 m ใน 5 s ส่วนรถยก B ยกกล่อง 40 kg สูง 6 m ใน 8 s คันไหนมีกำลังมากกว่า',
+    machines: [ { name: 'รถยก A', desc: '50 kg สูง 4 m ใน 5 s (W = 2,000 J)', W: 2000, t: 5, color: '#ffd23f' },
+                { name: 'รถยก B', desc: '40 kg สูง 6 m ใน 8 s (W = 2,400 J)', W: 2400, t: 8, color: '#9b5cff' } ],
+    choices: [ { text: 'รถยก A มีกำลังมากกว่า (400 W)', correct: true },
+               { text: 'รถยก B มีกำลังมากกว่า (300 W)' },
+               { text: 'รถยก B เพราะทำงานมากกว่า (2,400 J)' },
+               { text: 'รถยก A มีกำลังมากกว่า (300 W)' } ],
+    time: 100, reward: 60,
+    hint: 'หางานก่อน W = m × g × h แล้ว P = W ÷ t ของแต่ละคัน',
+    tip: 'ทำงานมากกว่า ไม่ได้แปลว่ามีกำลังมากกว่าเสมอ ต้องดูเวลาด้วย!' },
+
+  { id: 'p6', track: 'power', mode: 'push', machine: true, name: 'บอส: เครื่องปั่นไฟยักษ์', surface: 'metal', boxColor: '#ff4d5e',
+    story: 'บอสใหญ่! เครื่องดันพลังสูงออกแรง 500 N ทำงานนาน 8 s ต้องได้กำลัง 750 W พอดี ต้องดันไปไกลกี่เมตร',
+    mass: 100, mu: 0.3, vars: { F: { fixed: 500 }, s: { min: 1, max: 20, step: 1, start: 4 }, t: { fixed: 8 } },
+    goal: { P: 750 }, time: 120, reward: 90,
+    hint: 'W = P × t = 750 × 8 = 6000 J แล้ว s = W ÷ F = 6000 ÷ 500 = ?',
+    tip: 'จาก P = W ÷ t จัดรูปได้ W = P × t และ t = W ÷ P' }
+];
+
+/**
+ * SHOP_ITEMS: ของในร้านค้า
+ *  type 'upgrade' = มีผลต่อเกม | 'cosmetic' = ของแต่งตัว
+ *  hat / acc = ปลดล็อกหมวก/อุปกรณ์ในตู้ล็อกเกอร์ (ต้องตรงกับ id ใน AVATAR_OPTIONS)
+ */
+const SHOP_ITEMS = [
+  { id: 'gloves',  icon: '🧤', name: 'ถุงมือพลังช้าง',      price: 80,  type: 'upgrade',  desc: 'ถุงมือทองเพิ่มแรงฮึด! ได้เหรียญจากทุกด่าน +20%' },
+  { id: 'jetpack', icon: '🚀', name: 'กระเป๋าเป้ไอพ่น',     price: 120, type: 'upgrade',  acc: 'jetpack', desc: 'เวลากะในทุกด่าน +30 วินาที และใส่โชว์ได้' },
+  { id: 'goggles', icon: '🥽', name: 'แว่นวิศวกร AR',       price: 100, type: 'upgrade',  acc: 'goggles', desc: 'ดูคำใบ้แบบละเอียดได้ฟรีทุกด่าน' },
+  { id: 'cart',    icon: '💎', name: 'รถเข็นล้อเพชร',        price: 150, type: 'upgrade',  desc: 'ลองครั้งที่ 2 แล้วผ่าน ยังได้ 3 ดาวเต็ม' },
+  { id: 'neon',    icon: '🪖', name: 'หมวกนีออนไซเบอร์',    price: 60,  type: 'cosmetic', hat: 'neon',  desc: 'หมวกเรืองแสงสุดล้ำ' },
+  { id: 'cape',    icon: '🦸', name: 'ผ้าคลุมฮีโร่พลังงาน',  price: 90,  type: 'cosmetic', acc: 'cape',  desc: 'โบกสะบัดทุกครั้งที่ออกแรง' },
+  { id: 'gold',    icon: '👑', name: 'หมวกนิรภัยทองคำ',     price: 200, type: 'cosmetic', hat: 'gold',  desc: 'ของหายากสำหรับวิศวกรตัวท็อป' }
+];
+
+/** BADGES: ถ้วยรางวัล (เงื่อนไขตรวจในฟังก์ชัน checkBadges) */
+const BADGES = [
+  { id: 'first',       icon: '🎫', name: 'First Day',        desc: 'ผ่านด่านแรกได้สำเร็จ' },
+  { id: 'physicsgod',  icon: '🧠', name: 'The Physics God',  desc: 'คำนวณกำลังถูก 5 ข้อติดกัน' },
+  { id: 'heavylifter', icon: '🏋️', name: 'Heavy Lifter',     desc: 'สร้างงานสะสมครบ 10,000 J' },
+  { id: 'speed',       icon: '⚡', name: 'Speed Demon',      desc: 'ผ่านด่านโดยเหลือเวลาเกินครึ่ง' },
+  { id: 'oil',         icon: '🛢️', name: 'Oil Surfer',       desc: 'ผ่านด่านพื้นน้ำมัน' },
+  { id: 'shopper',     icon: '🛍️', name: 'Big Spender',      desc: 'ซื้อของในร้านครบ 3 ชิ้น' },
+  { id: 'arcade',      icon: '🕹️', name: 'Arcade Legend',    desc: 'อาร์เคดตอบถูก 10 ข้อขึ้นไปในรอบเดียว' },
+  { id: 'workmaster',  icon: '🏆', name: 'Work Master',      desc: 'ผ่านสายจอมพลังครบทุกด่าน' },
+  { id: 'powerracer',  icon: '🏁', name: 'Power Racer',      desc: 'ผ่านสายสปีดดี้ครบทุกด่าน' },
+  { id: 'perfect',     icon: '🌟', name: 'Perfect Engineer', desc: 'ได้ 3 ดาวครบทุกด่าน' }
+];
+
+/** AVATAR_OPTIONS: ตัวเลือกแต่งตัวละคร (shop: true = ต้องซื้อในร้านก่อน) */
+const AVATAR_OPTIONS = {
+  skin:     ['#ffd23f', '#f6cfa3', '#d99a6c', '#8d5a3b', '#7ee0ff', '#b7ff8a'],
+  shirt:    ['#2b7bff', '#ff3fb4', '#35f28a', '#ff8a1f', '#9b5cff', '#f2f5ff', '#2a2f4a'],
+  pants:    ['#2a3566', '#1b1b1b', '#6b4423', '#2f7d4a', '#7a2b5c'],
+  hatColor: ['#ff8a1f', '#ffd23f', '#ff4d5e', '#22e3ff', '#f2f5ff', '#35f28a'],
+  hat: [ { id: 'hardhat', name: 'หมวกนิรภัย' }, { id: 'cap', name: 'หมวกแก๊ป' }, { id: 'none', name: 'ไม่ใส่' },
+         { id: 'neon', name: 'นีออนไซเบอร์', shop: true }, { id: 'gold', name: 'นิรภัยทองคำ', shop: true } ],
+  acc: [ { id: 'none', name: 'ไม่มี' }, { id: 'jetpack', name: 'เป้ไอพ่น', shop: true },
+         { id: 'goggles', name: 'แว่น AR', shop: true }, { id: 'cape', name: 'ผ้าคลุม', shop: true } ]
+};
+const DEFAULT_AVATAR = { skin: '#ffd23f', shirt: '#2b7bff', pants: '#2a3566', hat: 'hardhat', hatColor: '#ff8a1f', acc: 'none' };
+
+/** ข้อความความรู้บนหน้าโหลด (สุ่มแสดง) */
+const LOADING_TIPS = [
+  'รู้หรือไม่? 1 จูล คืองานที่เกิดจากแรง 1 นิวตันทำให้วัตถุเคลื่อนที่ 1 เมตร',
+  'กำลัง 1 วัตต์ คือการทำงาน 1 จูลในเวลา 1 วินาที',
+  'ถ้าออกแรงแล้ววัตถุไม่ขยับ งานจะเท่ากับศูนย์!',
+  'งานเท่ากัน ใครใช้เวลาน้อยกว่า คนนั้นมีกำลังมากกว่า',
+  'แรงยกวัตถุขึ้นตรงๆ = น้ำหนัก = มวล × 10',
+  'น้ำมันทำให้พื้นลื่น แรงเสียดทานจึงน้อยลง',
+  'สูตรเด็ด: W = F × s และ P = W ÷ t'
+];
+
+/**
+ * SONGS: เพลง Chiptune (แต่ละช่อง = โน้ต 1/16 จังหวะ, '-' = เว้น)
+ *  lead/bass ใช้ชื่อโน้ตสากล เช่น C5, F#4 | drums: k=กลองเบส s=สแนร์ h=ไฮแฮต .=เว้น
+ */
+const SONGS = {
+  lobby: { bpm: 104, wave: 'triangle', leadVol: 0.16,
+    lead: ('E5 - - - G5 - E5 - D5 - C5 - - - - - ' + 'C5 - - - E5 - C5 - B4 - A4 - - - - - ' +
+           'A4 - C5 - F5 - E5 - D5 - C5 - A4 - C5 - ' + 'B4 - - - D5 - G5 - F5 - E5 - D5 - - -').split(' '),
+    bass: ('C3 - - - G3 - - - C3 - - - G3 - - - ' + 'A2 - - - E3 - - - A2 - - - E3 - - - ' +
+           'F2 - - - C3 - - - F2 - - - C3 - - - ' + 'G2 - - - D3 - - - G2 - - - B2 - - -').split(' '),
+    drums: 'k...h...s...h...' },
+  factory: { bpm: 148, wave: 'square', leadVol: 0.07,
+    lead: ('C5 - E5 - G5 - E5 - C6 - G5 - E5 - G5 - ' + 'A4 - C5 - E5 - C5 - A5 - E5 - C5 - E5 - ' +
+           'F4 - A4 - C5 - A4 - F5 - C5 - A4 - C5 - ' + 'G4 - B4 - D5 - G5 - F5 - D5 - B4 - D5 G5').split(' '),
+    bass: ('C3 - C4 - C3 - C4 - C3 - C4 - C3 - C4 - ' + 'A2 - A3 - A2 - A3 - A2 - A3 - A2 - A3 - ' +
+           'F2 - F3 - F2 - F3 - F2 - F3 - F2 - F3 - ' + 'G2 - G3 - G2 - G3 - G2 - G3 - B2 - D3 -').split(' '),
+    drums: 'k.h.s.hkk.h.s.h.' }
+};
+
+/* =====================================================================
+   2) ตัวช่วยทั่วไป
+   ===================================================================== */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a);
+const ri = (a, b) => Math.floor(rand(a, b + 1));
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const fmt = (n) => (Math.round(n * 100) / 100).toLocaleString('th-TH');
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+/** วาดสี่เหลี่ยมมุมมน */
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+/** ปรับสีให้สว่าง/มืดลง (amt บวก=สว่าง) — มีแคชเพื่อประสิทธิภาพ */
+const shadeCache = new Map();
+function shade(hex, amt) {
+  const k = hex + amt; let v = shadeCache.get(k); if (v) return v;
+  const n = parseInt(hex.slice(1), 16);
+  const r = clamp((n >> 16) + amt, 0, 255), g = clamp(((n >> 8) & 255) + amt, 0, 255), b = clamp((n & 255) + amt, 0, 255);
+  v = `rgb(${r},${g},${b})`; shadeCache.set(k, v); return v;
+}
+
+/* =====================================================================
+   3) ระบบบันทึกข้อมูลผู้เล่น (localStorage)
+   ===================================================================== */
+const SAVE_KEY = 'powerinc_save_v1';
+let DB = { current: null, players: {}, board: [] };
+function newProfile(name) {
+  return { name, avatar: { ...DEFAULT_AVATAR }, job: 'work', coins: 50, levels: {}, totalWork: 0, owned: [], badges: [],
+    streak: 0, bestStreak: 0, attempts: 0, correct: 0, arcadeBest: 0, arcadeTotal: 0, flags: {}, created: Date.now() };
+}
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) { const d = JSON.parse(raw); if (d && d.players) DB = Object.assign({ current: null, players: {}, board: [] }, d); }
+  } catch (e) { /* ไม่มี localStorage ก็เล่นต่อได้ */ }
+  // เติมฟิลด์ที่ขาด (กรณีอัปเดตเวอร์ชัน)
+  for (const k in DB.players) DB.players[k] = Object.assign(newProfile(k), DB.players[k]);
+  if (!DB.current || !DB.players[DB.current]) {
+    const first = Object.keys(DB.players)[0];
+    if (first) DB.current = first; else { DB.current = 'นักเรียน 1'; DB.players[DB.current] = newProfile(DB.current); }
+  }
+}
+function saveDB() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(DB)); } catch (e) { /* เงียบ */ } }
+const me = () => DB.players[DB.current];
+const owns = (id) => me().owned.includes(id);
+const levelRec = (id) => me().levels[id] || { stars: 0, best: 0, clears: 0 };
+const isCleared = (id) => levelRec(id).stars > 0;
+const levelsOf = (track) => LEVELS.filter((l) => l.track === track);
+function totalScore(p) { let s = 0; for (const k in p.levels) s += p.levels[k].best || 0; return s + (p.arcadeTotal || 0) * 10; }
+function totalStars(p) { let s = 0; for (const k in p.levels) s += p.levels[k].stars || 0; return s; }
+function clearedCount(p) { return LEVELS.filter((l) => (p.levels[l.id] || {}).stars > 0).length; }
+function isUnlocked(L) {
+  const list = levelsOf(L.track); const i = list.indexOf(L);
+  return i <= 0 || isCleared(list[i - 1].id);
+}
+
+/* =====================================================================
+   4) ระบบเสียง: Chiptune BGM + SFX ด้วย Web Audio API (สังเคราะห์สด ไม่ใช้ไฟล์เสียง)
+   ===================================================================== */
+const AudioSys = {
+  ctx: null, master: null, music: null, sfxBus: null, noise: null, on: true,
+  song: null, step: 0, nextTime: 0, timer: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const ctx = this.ctx = new AC();
+    this.master = ctx.createGain(); this.master.gain.value = this.on ? 0.7 : 0; this.master.connect(ctx.destination);
+    this.music = ctx.createGain(); this.music.gain.value = 0.5; this.music.connect(this.master);
+    this.sfxBus = ctx.createGain(); this.sfxBus.gain.value = 0.9; this.sfxBus.connect(this.master);
+    const len = ctx.sampleRate; const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this.noise = buf;
+    this.timer = setInterval(() => this.schedule(), 25);
+  },
+  toggle() { this.on = !this.on; if (this.master) this.master.gain.setTargetAtTime(this.on ? 0.7 : 0, this.ctx.currentTime, 0.05); return this.on; },
+  noteF(n) { const m = /^([A-G])(#?)(\d)$/.exec(n); if (!m) return 0; const semi = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); return 440 * Math.pow(2, ((+m[3] + 1) * 12 + semi - 69) / 12); },
+  /** เล่นโทนเสียงหนึ่งตัว (ใช้ทั้งเพลงและเอฟเฟกต์) */
+  tone(freq, t, dur, type = 'square', vol = 0.2, dest = this.sfxBus, slideTo = 0) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.03);
+  },
+  noiseHit(t, dur, vol, freq, dest = this.sfxBus, ftype = 'highpass') {
+    const c = this.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.noise; f.type = ftype; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02);
+  },
+  kick(t) { this.tone(150, t, 0.16, 'sine', 0.5, this.music, 45); },
+  playSong(name) { if (this.song === SONGS[name]) return; this.song = SONGS[name]; this.step = 0; if (this.ctx) this.nextTime = this.ctx.currentTime + 0.08; },
+  /** ตัวจัดคิวโน้ต (look-ahead scheduler) ทำให้จังหวะเพลงนิ่งแม้ FPS ตก */
+  schedule() {
+    const c = this.ctx; if (!c || !this.song || !this.on || c.state !== 'running') return;
+    const S = this.song, spb = 60 / S.bpm / 4;
+    if (this.nextTime < c.currentTime - 0.2) this.nextTime = c.currentTime + 0.05;
+    while (this.nextTime < c.currentTime + 0.12) {
+      const i = this.step, t = this.nextTime;
+      const n = S.lead[i]; if (n && n !== '-') this.tone(this.noteF(n), t, spb * 1.7, S.wave, S.leadVol, this.music);
+      const b = S.bass[i]; if (b && b !== '-') this.tone(this.noteF(b), t, spb * 1.9, 'triangle', 0.2, this.music);
+      const d = S.drums[i % S.drums.length];
+      if (d === 'k') this.kick(t); else if (d === 's') this.noiseHit(t, 0.12, 0.22, 1800, this.music, 'bandpass'); else if (d === 'h') this.noiseHit(t, 0.035, 0.08, 7000, this.music);
+      this.nextTime += spb; this.step = (this.step + 1) % S.lead.length;
+    }
+  },
+  /** เอฟเฟกต์เสียงตามชื่อ */
+  sfx(name, p = 0) {
+    const c = this.ctx; if (!c || !this.on) return; const t = c.currentTime + 0.005;
+    switch (name) {
+      case 'click': this.tone(700, t, 0.05, 'square', 0.08); break;
+      case 'tick': this.tone(300 + p * 900, t, 0.035, 'square', 0.05); break;
+      case 'coin': this.tone(988, t, 0.08, 'square', 0.12); this.tone(1319, t + 0.08, 0.28, 'square', 0.12); break;
+      case 'correct': this.tone(880, t, 0.09, 'square', 0.12); this.tone(1175, t + 0.09, 0.18, 'square', 0.12); break;
+      case 'wrong': this.tone(220, t, 0.25, 'sawtooth', 0.12, this.sfxBus, 120); break;
+      case 'beep': this.tone(1046, t, 0.12, 'square', 0.18); this.tone(1046, t + 0.2, 0.12, 'square', 0.18); this.tone(1046, t + 0.4, 0.12, 'square', 0.18); break;
+      case 'oof': { // เลียนเสียง "Oof!" แบบ Roblox
+        const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(380, t); o.frequency.exponentialRampToValueAtTime(130, t + 0.3);
+        f.type = 'bandpass'; f.Q.value = 2.5; f.frequency.setValueAtTime(950, t); f.frequency.exponentialRampToValueAtTime(420, t + 0.3);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+        o.connect(f); f.connect(g); g.connect(this.sfxBus); o.start(t); o.stop(t + 0.36);
+        this.tone(190, t, 0.3, 'square', 0.06, this.sfxBus, 90); break; }
+      case 'vroom': { // เสียงเครื่องจักร "Vroom!"
+        const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(55, t); o.frequency.exponentialRampToValueAtTime(240, t + 0.55); o.frequency.exponentialRampToValueAtTime(150, t + 1.1);
+        f.type = 'lowpass'; f.frequency.value = 900; lfo.frequency.value = 24; lg.gain.value = 0.12;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
+        lfo.connect(lg); lg.connect(g.gain); o.connect(f); f.connect(g); g.connect(this.sfxBus);
+        o.start(t); lfo.start(t); o.stop(t + 1.2); lfo.stop(t + 1.2); break; }
+      case 'pop': this.noiseHit(t, 0.35, 0.5, 900); for (let i = 0; i < 5; i++) this.tone(rand(900, 2200), t + i * 0.05, 0.08, 'square', 0.06); break;
+      case 'win': [523, 659, 784, 1046].forEach((f, i) => this.tone(f, t + i * 0.09, 0.16, 'square', 0.12)); this.tone(1318, t + 0.38, 0.4, 'triangle', 0.2); break;
+      case 'lose': [392, 330, 262].forEach((f, i) => this.tone(f, t + i * 0.14, 0.16, 'triangle', 0.18)); break;
+      case 'badge': [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, t + i * 0.07, 0.2, 'square', 0.1)); break;
+      case 'whoosh': this.noiseHit(t, 0.4, 0.25, 600, this.sfxBus, 'bandpass'); break;
+      case 'buy': this.sfx('coin'); this.tone(1568, t + 0.3, 0.3, 'triangle', 0.15); break;
+    }
+  }
+};
+
+/* =====================================================================
+   5) UI ทั่วไป: เปลี่ยนฉาก, Toast, Modal
+   ===================================================================== */
+let curScreen = 'splash', transBusy = false;
+function goScreen(name) {
+  if (name === curScreen || transBusy) return;
+  transBusy = true; AudioSys.sfx('whoosh');
+  $('#trText').textContent = '💡 ' + pick(LOADING_TIPS);
+  $('#trans').classList.add('on');
+  setTimeout(() => {
+    $$('.screen').forEach((s) => s.classList.toggle('active', s.id === 'scr-' + name));
+    curScreen = name; onEnterScreen(name);
+  }, 450);
+  setTimeout(() => { $('#trans').classList.remove('on'); transBusy = false; }, 1050);
+}
+function onEnterScreen(name) {
+  $('#topbar').classList.toggle('hidden', name === 'splash');
+  $$('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
+  if (name === 'lobby') { renderLobby(); AudioSys.playSong('lobby'); }
+  if (name === 'factory') { renderFactory(); AudioSys.playSong('factory'); requestAnimationFrame(resizeGame); }
+  if (name === 'shop') { renderShop(); AudioSys.playSong('lobby'); }
+  if (name !== 'shop' && Arcade.on) endArcade(true);
+  updateTopbar();
+}
+function toast(html, cls = '') {
+  const el = document.createElement('div'); el.className = 'toast ' + cls; el.innerHTML = html;
+  $('#toasts').appendChild(el); setTimeout(() => el.remove(), 3200);
+}
+let modalOnClose = null;
+function showModal(html, wide = false, onClose = null) {
+  const card = $('#modalCard'); card.className = 'modal-card' + (wide ? ' wide' : ''); card.innerHTML = html;
+  $('#modal').classList.add('show'); modalOnClose = onClose;
+}
+function closeModal() { $('#modal').classList.remove('show'); const f = modalOnClose; modalOnClose = null; if (f) f(); }
+const modalOpen = () => $('#modal').classList.contains('show');
+function updateTopbar() {
+  const p = me();
+  $('#tbCoins').textContent = p.coins.toLocaleString('th-TH');
+  $('#hudCoins').textContent = p.coins.toLocaleString('th-TH');
+  $('#hudScore').textContent = totalScore(p).toLocaleString('th-TH');
+  $('#hudStreak').textContent = p.streak;
+}
+
+/* =====================================================================
+   6) วาดตัวละครบล็อกสไตล์ Roblox (R6)
+   ===================================================================== */
+/** วาดแขน/ขา หมุนรอบจุดหมุน (ไหล่/สะโพก) */
+function limb(c, px, py, ang, w, h, col, endCol, topCol) {
+  c.save(); c.translate(px, py); c.rotate(ang);
+  c.fillStyle = col; rr(c, -w / 2, 0, w, h, 4); c.fill();
+  if (topCol) { c.fillStyle = topCol; rr(c, -w / 2, 0, w, h * 0.42, 4); c.fill(); }
+  c.fillStyle = endCol; rr(c, -w / 2, h - 10, w, 11, 4); c.fill();
+  c.restore();
+}
+/**
+ * drawAvatar: วาดตัวละคร (x,y = จุดกึ่งกลางเท้า)
+ * pose: idle | push | strain | scratch | cheer | pull | sad
+ */
+function drawAvatar(c, x, y, sc, av, pose, tm, opt = {}) {
+  c.save(); c.translate(x, y); c.scale(sc, sc);
+  let up = 0, la = 0.08, ra = -0.08, ll = 0, rl = 0, face = 'happy';
+  const s = Math.sin(tm * 3);
+  switch (pose) {
+    case 'idle': up = Math.abs(Math.sin(tm * 2)) * 1.5; la = 0.08 + s * 0.05; ra = -la; break;
+    case 'push': { const w = Math.sin(tm * 11); la = -1.45 + w * 0.08; ra = -1.45 - w * 0.08; ll = w * 0.45; rl = -w * 0.45; face = 'effort'; break; }
+    case 'strain': la = ra = -1.45 + Math.sin(tm * 40) * 0.05; ll = 0.35; rl = -0.25; face = 'effort'; break;
+    case 'scratch': la = 0.12; ra = 2.55 + Math.sin(tm * 18) * 0.18; face = 'confused'; break;
+    case 'cheer': up = Math.abs(Math.sin(tm * 8)) * 12; la = 2.5 + s * 0.2; ra = -2.5 - s * 0.2; ll = -0.2; rl = 0.2; face = 'joy'; break;
+    case 'pull': { const w = Math.sin(tm * 9); la = -2.75 + w * 0.25; ra = -2.75 - w * 0.25; ll = 0.15; rl = -0.15; face = 'effort'; break; }
+    case 'sad': la = 0.25; ra = -0.25; face = 'sad'; break;
+  }
+  c.translate(0, -up);
+  // --- อุปกรณ์ด้านหลัง ---
+  if (av.acc === 'cape') {
+    const wv = Math.sin(tm * 5) * 4;
+    c.fillStyle = '#e8344e'; c.beginPath(); c.moveTo(-19, -80); c.lineTo(19, -80); c.lineTo(27 + wv, -14); c.lineTo(-27 + wv, -14); c.closePath(); c.fill();
+  }
+  if (av.acc === 'jetpack') {
+    c.fillStyle = '#8a94b8'; rr(c, -33, -84, 14, 38, 6); c.fill(); rr(c, 19, -84, 14, 38, 6); c.fill();
+    c.fillStyle = '#ff4d5e'; c.fillRect(-33, -84, 14, 6); c.fillRect(19, -84, 14, 6);
+    if (opt.flame || pose === 'cheer') {
+      const fl = 12 + Math.random() * 10;
+      c.fillStyle = '#ffb020'; [-26, 26].forEach((fx) => { c.beginPath(); c.moveTo(fx - 6, -46); c.lineTo(fx + 6, -46); c.lineTo(fx, -46 + fl); c.closePath(); c.fill(); });
+    }
+  }
+  // --- ขา ---
+  limb(c, -10, -40, ll, 19, 41, av.pants, '#1d1d24');
+  limb(c, 10, -40, rl, 19, 41, av.pants, '#1d1d24');
+  // --- ลำตัว + เสื้อกั๊กช่าง ---
+  c.fillStyle = av.shirt; rr(c, -21, -82, 42, 44, 6); c.fill();
+  c.fillStyle = 'rgba(255,138,31,.95)'; c.fillRect(-21, -82, 10, 44); c.fillRect(11, -82, 10, 44);
+  c.fillStyle = '#e8f6ff'; c.fillRect(-21, -62, 10, 4); c.fillRect(11, -62, 10, 4);
+  c.fillStyle = '#3a2a1a'; c.fillRect(-21, -43, 42, 5); c.fillStyle = '#ffd23f'; c.fillRect(-4, -43, 8, 5);
+  c.fillStyle = '#ffffffcc'; c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.fillText('P', 0, -56);
+  // --- แขน (ถุงมือช่าง) ---
+  const glove = opt.gold ? '#ffd23f' : '#ff8a1f';
+  limb(c, -30, -80, la, 17, 38, av.skin, glove, av.shirt);
+  limb(c, 30, -80, ra, 17, 38, av.skin, glove, av.shirt);
+  // --- หัว ---
+  c.fillStyle = av.skin; rr(c, -16, -113, 32, 31, 9); c.fill();
+  c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(-7, -84, 14, 3);
+  // ใบหน้า
+  c.fillStyle = '#1b1b1b'; c.strokeStyle = '#1b1b1b'; c.lineWidth = 2.2; c.lineCap = 'round';
+  const blink = (tm % 3.7) < 0.12;
+  if (face === 'joy') { c.beginPath(); c.arc(-7, -100, 3, Math.PI, 0); c.stroke(); c.beginPath(); c.arc(7, -100, 3, Math.PI, 0); c.stroke(); }
+  else if (blink) { c.beginPath(); c.moveTo(-10, -100); c.lineTo(-4, -100); c.moveTo(4, -100); c.lineTo(10, -100); c.stroke(); }
+  else { c.beginPath(); c.ellipse(-7, -100, 2.6, 3.6, 0, 0, Math.PI * 2); c.ellipse(7, -100, 2.6, 3.6, 0, 0, Math.PI * 2); c.fill(); }
+  c.beginPath();
+  if (face === 'happy') { c.arc(0, -94, 6, 0.2, Math.PI - 0.2); c.stroke(); }
+  else if (face === 'joy') { c.moveTo(-7, -93); c.quadraticCurveTo(0, -83, 7, -93); c.closePath(); c.fill(); }
+  else if (face === 'effort') { c.fillStyle = '#fff'; rr(c, -6, -93, 12, 5, 2); c.fill(); c.strokeRect(-6, -93, 12, 5); c.moveTo(-12, -107); c.lineTo(-4, -105); c.moveTo(12, -107); c.lineTo(4, -105); c.stroke(); }
+  else if (face === 'confused') { c.arc(2, -90, 3, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(-11, -108); c.lineTo(-3, -106); c.stroke(); }
+  else if (face === 'sad') { c.arc(0, -86, 6, Math.PI + 0.3, -0.3); c.stroke(); }
+  if (av.acc === 'goggles') {
+    c.fillStyle = '#333'; c.fillRect(-16, -104, 32, 4);
+    c.fillStyle = 'rgba(34,227,255,.75)'; c.strokeStyle = '#222'; c.lineWidth = 2;
+    c.beginPath(); c.arc(-7, -101, 5.5, 0, Math.PI * 2); c.fill(); c.stroke(); c.beginPath(); c.arc(7, -101, 5.5, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  // --- หมวก ---
+  const hc = av.hatColor;
+  if (av.hat === 'hardhat' || av.hat === 'gold') {
+    const col = av.hat === 'gold' ? '#ffcc22' : hc;
+    c.fillStyle = col; c.beginPath(); c.ellipse(0, -112, 18, 15, 0, Math.PI, 0); c.fill();
+    c.fillStyle = shade(col.startsWith('#') ? col : '#ffcc22', -40); rr(c, -23, -114, 46, 6, 3); c.fill();
+    c.fillStyle = shade(col, 40); c.fillRect(-3, -127, 6, 13);
+    if (av.hat === 'gold') { const sp = (Math.sin(tm * 4) + 1) / 2; c.fillStyle = `rgba(255,255,255,${0.4 + sp * 0.6})`; c.beginPath(); c.arc(10, -121, 2 + sp * 2, 0, Math.PI * 2); c.fill(); }
+  } else if (av.hat === 'cap') {
+    c.fillStyle = hc; c.beginPath(); c.ellipse(0, -111, 17, 12, 0, Math.PI, 0); c.fill();
+    c.fillStyle = shade(hc, -45); rr(c, 2, -114, 24, 5, 3); c.fill();
+  } else if (av.hat === 'neon') {
+    c.fillStyle = '#1b1f3a'; c.beginPath(); c.ellipse(0, -110, 19, 16, 0, Math.PI, 0); c.fill();
+    c.fillStyle = '#22e3ff'; c.fillRect(-18, -114, 36, 4);
+    c.fillStyle = '#ff3fb4'; c.fillRect(-1, -136, 2, 10); c.beginPath(); c.arc(0, -137, 3 + Math.sin(tm * 6), 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+/** ฟองคำพูด/ความคิดเหนือหัวตัวละคร */
+function bubble(c, x, y, text, col = '#fff') {
+  c.font = 'bold 22px ' + FONT; const w = c.measureText(text).width + 22;
+  c.fillStyle = col; rr(c, x - w / 2, y - 34, w, 34, 12); c.fill();
+  c.beginPath(); c.moveTo(x - 6, y); c.lineTo(x + 6, y); c.lineTo(x, y + 9); c.fill();
+  c.fillStyle = '#111'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, x, y - 16); c.textBaseline = 'alphabetic';
+}
+const FONT = '"Segoe UI","Leelawadee UI","Noto Sans Thai",Tahoma,sans-serif';
+
+/* =====================================================================
+   7) ฉากที่ 1: ล็อบบี้ — แต่งตัวละคร / เลือกผู้เล่น / เลือกสายงาน
+   ===================================================================== */
+function renderLobby() {
+  const p = me();
+  $('#lockerName').textContent = p.name;
+  // รายชื่อผู้เล่น
+  $('#profileSel').innerHTML = Object.keys(DB.players).map((n) => `<option value="${esc(n)}"${n === DB.current ? ' selected' : ''}>👷 ${esc(n)}</option>`).join('');
+  $('#nameInput').value = '';
+  // ตัวเลือกแต่งตัว
+  const av = p.avatar;
+  const sw = (key, list) => list.map((col) => `<button class="sw${av[key] === col ? ' on' : ''}" style="background:${col}" data-k="${key}" data-v="${col}" aria-label="${key} ${col}"></button>`).join('');
+  const opts = (key, list) => list.map((o) => {
+    const locked = o.shop && !owns(o.id);
+    return `<button class="opt${av[key] === o.id ? ' on' : ''}${locked ? ' locked' : ''}" data-k="${key}" data-v="${o.id}" data-locked="${locked ? 1 : 0}">${locked ? '🔒 ' : ''}${o.name}</button>`;
+  }).join(' ');
+  $('#custBox').innerHTML = `<h4>🎨 ปรับแต่งตัวละคร (Avatar)</h4>
+    <div class="cust-row"><label>สีผิว</label><div class="swatches">${sw('skin', AVATAR_OPTIONS.skin)}</div></div>
+    <div class="cust-row"><label>สีเสื้อ</label><div class="swatches">${sw('shirt', AVATAR_OPTIONS.shirt)}</div></div>
+    <div class="cust-row"><label>สีกางเกง</label><div class="swatches">${sw('pants', AVATAR_OPTIONS.pants)}</div></div>
+    <div class="cust-row"><label>หมวก</label><div class="swatches">${opts('hat', AVATAR_OPTIONS.hat)}</div></div>
+    <div class="cust-row"><label>สีหมวก</label><div class="swatches">${sw('hatColor', AVATAR_OPTIONS.hatColor)}</div></div>
+    <div class="cust-row"><label>อุปกรณ์ช่าง</label><div class="swatches">${opts('acc', AVATAR_OPTIONS.acc)}</div></div>`;
+  // การ์ดสายงาน
+  $('#jobs').innerHTML = Object.entries(JOBS).map(([k, j]) =>
+    `<button class="job${p.job === k ? ' on' : ''}" data-job="${k}"><div class="ji">${j.icon}</div><b>${j.name}</b><p>${j.desc}</p><span class="perk">🎁 ${j.perk}</span></button>`).join('');
+}
+function bindLobby() {
+  $('#custBox').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    if (b.dataset.locked === '1') { toast('🔒 ปลดล็อกได้ที่ร้านค้า (ฉากที่ 3)', 'info'); AudioSys.sfx('wrong'); return; }
+    me().avatar[b.dataset.k] = b.dataset.v; saveDB(); AudioSys.sfx('click'); renderLobby();
+  });
+  $('#jobs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-job]'); if (!b) return;
+    me().job = b.dataset.job; saveDB(); AudioSys.sfx('correct'); renderLobby();
+  });
+  $('#profileSel').addEventListener('change', (e) => { DB.current = e.target.value; saveDB(); renderLobby(); updateTopbar(); AudioSys.sfx('click'); });
+  const useName = () => {
+    const n = $('#nameInput').value.trim().slice(0, 20); if (!n) { toast('พิมพ์ชื่อก่อนนะ ✍️', 'info'); return; }
+    if (!DB.players[n]) { DB.players[n] = newProfile(n); toast(`👋 ยินดีต้อนรับพนักงานใหม่ <b>${esc(n)}</b>!`, 'info'); }
+    DB.current = n; saveDB(); renderLobby(); updateTopbar(); AudioSys.sfx('coin');
+  };
+  $('#btnName').addEventListener('click', useName);
+  $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') useName(); e.stopPropagation(); });
+  $('#btnShift').addEventListener('click', () => { Fac.track = me().job; Fac.L = null; goScreen('factory'); });
+}
+// ตัวละครหมุนโชว์ในล็อบบี้
+const avCanvas = $('#avatarCanvas'), avCtx = avCanvas.getContext('2d');
+let avPose = 'idle', avPoseT = 0;
+avCanvas.addEventListener('click', () => { avPose = 'cheer'; avPoseT = 1.2; AudioSys.sfx('oof'); });
+function drawLobbyAvatar(tm, dt) {
+  const c = avCtx, W = 300, H = 360;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (avCanvas.width !== W * dpr) { avCanvas.width = W * dpr; avCanvas.height = H * dpr; }
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#24307a'); g.addColorStop(1, '#0b1030');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // ตู้ล็อกเกอร์ด้านหลัง
+  for (let i = 0; i < 5; i++) {
+    c.fillStyle = i % 2 ? '#2b3a8f' : '#31449f'; c.fillRect(i * 60 + 2, 40, 56, 200);
+    c.fillStyle = '#ffffff22'; for (let k = 0; k < 4; k++) c.fillRect(i * 60 + 14, 60 + k * 8, 30, 3);
+    c.fillStyle = '#ffd23f'; c.fillRect(i * 60 + 46, 140, 5, 16);
+  }
+  c.fillStyle = '#ff3fb4'; c.font = 'bold 20px ' + FONT; c.textAlign = 'center';
+  c.globalAlpha = 0.75 + Math.sin(tm * 3) * 0.25; c.fillText('★ POWER INC. ★', W / 2, 28); c.globalAlpha = 1;
+  // แท่นยืน
+  c.fillStyle = '#22e3ff55'; c.beginPath(); c.ellipse(W / 2, 318, 92, 18, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#22e3ff'; c.lineWidth = 3; c.stroke();
+  if (avPoseT > 0) { avPoseT -= dt; if (avPoseT <= 0) avPose = 'idle'; }
+  drawAvatar(c, W / 2, 318, 2.05, me().avatar, avPose, tm, { gold: owns('gloves'), flame: avPose === 'cheer' });
+  c.fillStyle = '#fff'; c.font = 'bold 13px ' + FONT; c.fillText('แตะตัวละครเพื่อทักทาย!', W / 2, 350);
+}
+
+/* =====================================================================
+   8) ฉากที่ 2: โรงงาน — ตรรกะด่าน, ฟิสิกส์, การวาดฉาก
+   ===================================================================== */
+const VW = 960, VH = 540; // ขนาดฉากแบบตรรกะ (ระบบย่อ/ขยายให้พอดีจอเอง)
+const VAR_INFO = { F: { label: 'แรง F', unit: 'N', icon: '💪' }, s: { label: 'ระยะทาง s', unit: 'm', icon: '📏' },
+                   h: { label: 'ความสูง h', unit: 'm', icon: '📐' }, t: { label: 'เวลา t', unit: 's', icon: '⏱️' } };
+const gameCanvas = $('#game'), gctx = gameCanvas.getContext('2d');
+const bgCanvas = document.createElement('canvas'), bgCtx = bgCanvas.getContext('2d');
+let viewScale = 1;
+
+/** สถานะของฉากโรงงาน */
+const Fac = {
+  track: 'work', L: null, vals: {}, phase: 'idle', // idle | run | after
+  attempts: 0, timeLeft: 0, timeMax: 1, runT: 0, runDur: 1, prog: 0, out: null, afterT: 0,
+  particles: [], floats: [], flash: 0, shake: 0, boxGone: false, showFric: false, hintShown: false,
+  layout: null, charging: false, chargeAcc: 0, smokeT: 0
+};
+
+function renderFactory() {
+  const tabs = Object.entries(JOBS).map(([k, j]) => `<button class="btn sm ${Fac.track === k ? 'orange' : 'ghost'}" data-track="${k}">${j.icon} ${k === 'work' ? 'สายงาน (W)' : 'สายกำลัง (P)'}</button>`).join('');
+  $('#trackTabs').innerHTML = tabs;
+  if (!Fac.L || Fac.L.track !== Fac.track) {
+    const list = levelsOf(Fac.track);
+    const L = list.find((l) => isUnlocked(l) && !isCleared(l.id)) || list.filter(isUnlocked).pop() || list[0];
+    loadLevel(L);
+  } else renderChips();
+}
+function renderChips() {
+  $('#chips').innerHTML = levelsOf(Fac.track).map((L, i) => {
+    const u = isUnlocked(L), st = levelRec(L.id).stars;
+    return `<button class="chip${Fac.L === L ? ' on' : ''}${u ? '' : ' lock'}" data-lv="${L.id}">${u ? '' : '🔒 '}ด่าน ${i + 1}: ${L.name}<small>${'★'.repeat(st)}${'☆'.repeat(3 - st)}</small></button>`;
+  }).join('');
+  const on = $('#chips .chip.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+/** โหลดด่านใหม่ */
+function loadLevel(L) {
+  if (Fac.L !== L) { Fac.attempts = 0; Fac.showFric = false; Fac.hintShown = false; }
+  Fac.L = L; Fac.vals = {};
+  if (L.mode === 'race') { Fac.vals.choice = -1; L._choices = shuffle(L.choices.map((c) => ({ ...c }))); }
+  else for (const k in L.vars) { const v = L.vars[k]; Fac.vals[k] = v.fixed != null ? v.fixed : v.start; }
+  resetAttempt(); renderChips();
+}
+/** เริ่มรอบใหม่ (ลองอีกครั้ง) */
+function resetAttempt() {
+  const L = Fac.L;
+  Object.assign(Fac, { phase: 'idle', runT: 0, prog: 0, out: null, afterT: 0, particles: [], floats: [], flash: 0, shake: 0, boxGone: false, charging: false });
+  Fac.timeMax = L.time + (owns('jetpack') ? 30 : 0); Fac.timeLeft = Fac.timeMax;
+  computeLayout(); renderBG(); buildPanel();
+}
+/** คำนวณตำแหน่งวัตถุในฉากตามข้อมูลด่าน */
+function computeLayout() {
+  const L = Fac.L; const Ly = {};
+  if (L.mode === 'push') {
+    const sv = L.vars.s; Ly.maxDist = sv.max != null ? sv.max : sv.fixed * 1.25;
+    Ly.floorY = 430; Ly.box = clamp(46 + L.mass * 0.45, 52, 96); Ly.x0 = 175;
+    Ly.scale = (905 - Ly.x0 - Ly.box) / Ly.maxDist;
+  } else if (L.mode === 'lift') {
+    const hv = L.vars.h; Ly.maxDist = hv.max != null ? hv.max : hv.fixed * 1.25;
+    Ly.floorY = 450; Ly.box = clamp(46 + L.mass * 0.45, 52, 96); Ly.bx = 600; Ly.topY = 105;
+    Ly.scale = (Ly.floorY - 14 - Ly.topY - Ly.box - 40) / Ly.maxDist;
+  } else {
+    Ly.lanes = [335, 478]; Ly.sx = 170; Ly.fx = 860; Ly.maxT = Math.max(...L.machines.map((m) => m.t));
+  }
+  Fac.layout = Ly;
+}
+
+/* ---------- แผงควบคุม (สร้างจากข้อมูลด่านอัตโนมัติ) ---------- */
+function buildPanel() {
+  const L = Fac.L, list = levelsOf(L.track), idx = list.indexOf(L) + 1;
+  let given = '', controls = '', goal = '';
+  if (L.mode === 'race') {
+    given = `<table class="mtable"><tr><th>เครื่อง</th><th>ข้อมูล</th></tr>${L.machines.map((m) => `<tr><td><b style="color:${m.color}">${m.name}</b></td><td>${m.desc}</td></tr>`).join('')}</table>`;
+    controls = L._choices.map((c, i) => `<button class="choice" data-choice="${i}">${String.fromCharCode(65 + i)}) ${c.text}</button>`).join('');
+    goal = '🎯 เลือกคำตอบที่ถูกต้อง แล้วกด “ลงมือ!” เพื่อดูการแข่ง';
+  } else {
+    const items = [];
+    items.push(['📦 มวลกล่อง m', L.mass + ' kg']);
+    if (L.mode === 'push') { items.push(['🧱 พื้นผิว', SURFACES[L.surface].name]); items.push(['🧲 สัมประสิทธิ์แรงเสียดทาน μ', L.mu]); }
+    else items.push(['🌍 g', G + ' m/s²']);
+    for (const k in L.vars) { const v = L.vars[k]; if (v.fixed != null) items.push([VAR_INFO[k].icon + ' ' + VAR_INFO[k].label, fmt(v.fixed) + ' ' + VAR_INFO[k].unit]); }
+    given = `<ul class="given">${items.map(([a, b]) => `<li><span>${a}</span><b>${b}</b></li>`).join('')}</ul>`;
+    for (const k in L.vars) {
+      const v = L.vars[k]; if (v.fixed != null) continue;
+      controls += `<div class="slider-row"><div class="sr-top"><span>${VAR_INFO[k].icon} ${VAR_INFO[k].label} (${VAR_INFO[k].unit})</span><b id="val-${k}">${fmt(Fac.vals[k])}</b></div>
+        <div class="slider-line"><button class="step-btn" data-step="${k}" data-d="-1" aria-label="ลด">−</button>
+        <input type="range" id="rng-${k}" data-var="${k}" min="${v.min}" max="${v.max}" step="${v.step}" value="${Fac.vals[k]}" aria-label="${VAR_INFO[k].label}">
+        <button class="step-btn" data-step="${k}" data-d="1" aria-label="เพิ่ม">+</button></div></div>`;
+    }
+    const gl = [];
+    if (L.goal.W != null) gl.push(`งาน W = ${fmt(L.goal.W)} J`);
+    if (L.goal.P != null) gl.push(`กำลัง P = ${fmt(L.goal.P)} W`);
+    goal = '🎯 เป้าหมาย: ' + gl.join(' และ ');
+  }
+  const hasF = L.vars && L.vars.F && L.vars.F.fixed == null;
+  $('#ctrl').innerHTML = `
+    <div class="card"><div class="lv-title">${JOBS[L.track].icon} ด่าน ${idx}: ${L.name}</div>
+      <p class="story">${L.story}</p><div class="goal-box">${goal}</div></div>
+    <div class="card"><h4>📋 ข้อมูลที่โจทย์ให้</h4>${given}</div>
+    <div class="card"><h4>${L.mode === 'race' ? '🗳️ เลือกคำตอบ' : '🎛️ ปรับค่าของคุณ'}</h4>${controls || '<p class="muted">ด่านนี้ไม่ต้องปรับค่า</p>'}
+      <div class="act-row" style="margin-top:6px">
+        ${hasF ? '<button class="btn yellow full" id="btnHold">💪 กดค้างเพื่อชาร์จแรง (Space)</button>' : ''}
+        <button class="btn ghost" id="btnHint">💡 คำใบ้${owns('goggles') ? ' (ฟรี)' : ' (10 🪙)'}</button>
+        <button class="btn orange" id="btnRun">▶ ลงมือ! (Enter)</button>
+      </div>
+      <div class="hint-box" id="hintBox" style="margin-top:8px"></div>
+    </div>
+    <div class="card"><h4>🧪 สูตรประจำโรงงาน</h4><div class="formula"><span>W = F × s</span><span>P = W ÷ t</span><span>F(ยก) = m × g</span><span>f = μ × m × g</span></div>
+      <p class="kbd-help" style="margin-top:6px">หน่วย: งาน J (จูล) · กำลัง W (วัตต์) · แรง N (นิวตัน)</p></div>`;
+  if (Fac.hintShown) showHint(true);
+  bindPanel();
+}
+function bindPanel() {
+  $$('#ctrl input[type=range]').forEach((r) => r.addEventListener('input', () => setVar(r.dataset.var, +r.value)));
+  $$('#ctrl [data-step]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.step, v = Fac.L.vars[k]; setVar(k, clamp(Fac.vals[k] + v.step * +b.dataset.d, v.min, v.max)); AudioSys.sfx('click');
+  }));
+  $$('#ctrl [data-choice]').forEach((b) => b.addEventListener('click', () => {
+    if (Fac.phase !== 'idle') return; Fac.vals.choice = +b.dataset.choice;
+    $$('#ctrl [data-choice]').forEach((x) => x.classList.toggle('on', x === b)); AudioSys.sfx('click');
+  }));
+  $('#btnRun').addEventListener('click', startRun);
+  $('#btnHint').addEventListener('click', () => showHint(false));
+  const hold = $('#btnHold');
+  if (hold) {
+    const on = (e) => { e.preventDefault(); startCharge(); };
+    const off = () => stopCharge();
+    hold.addEventListener('pointerdown', on); hold.addEventListener('pointerup', off);
+    hold.addEventListener('pointerleave', off); hold.addEventListener('pointercancel', off);
+    hold.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+}
+function setVar(k, v) {
+  const def = Fac.L.vars[k]; if (!def || def.fixed != null || Fac.phase !== 'idle') return;
+  v = Math.round(v / def.step) * def.step; v = clamp(+v.toFixed(2), def.min, def.max);
+  Fac.vals[k] = v;
+  const r = $('#rng-' + k); if (r) r.value = v;
+  const t = $('#val-' + k); if (t) t.textContent = fmt(v);
+}
+/** หลอดพลังงาน: กดค้างแล้วแรงจะเพิ่มขึ้นเรื่อยๆ ปล่อยเพื่อล็อกค่า */
+function startCharge() {
+  const L = Fac.L; if (!L.vars || !L.vars.F || L.vars.F.fixed != null || Fac.phase !== 'idle' || Fac.charging) return;
+  Fac.charging = true; Fac.chargeAcc = 0; setVar('F', 0);
+  const b = $('#btnHold'); if (b) b.classList.add('holding');
+}
+function stopCharge() { if (!Fac.charging) return; Fac.charging = false; const b = $('#btnHold'); if (b) b.classList.remove('holding'); }
+function showHint(silent) {
+  const L = Fac.L, box = $('#hintBox'); if (!box) return;
+  if (!Fac.hintShown && !silent) {
+    if (!owns('goggles')) {
+      if (me().coins < 10) { toast('🪙 เหรียญไม่พอ ลองดูสูตรประจำโรงงานด้านล่างนะ', 'info'); AudioSys.sfx('wrong'); return; }
+      me().coins -= 10; saveDB(); updateTopbar();
+    }
+    Fac.hintShown = true; AudioSys.sfx('coin');
+  }
+  box.style.display = 'block'; box.innerHTML = '💡 ' + L.hint;
+}
+
+/* ---------- ฟิสิกส์และการตรวจคำตอบ ---------- */
+const near = (a, b) => Math.abs(a - b) <= Math.max(0.5, Math.abs(b) * 0.005);
+/**
+ * evaluate: คำนวณผลลัพธ์จากค่าที่ผู้เล่นเลือก
+ * kind: success | stuck (แรงน้อยกว่าแรงเสียดทาน) | under/over (งานไม่ตรงเป้า)
+ *       slow/fast (กำลังไม่ตรงเป้า) | wrong (เลือกคำตอบผิด) | timeout (หมดเวลา)
+ */
+function evaluate(L, v) {
+  const r = { L, kind: 'success' };
+  if (L.mode === 'race') {
+    const ch = L._choices[v.choice]; r.choiceText = ch ? ch.text : '-';
+    r.kind = ch && ch.correct ? 'success' : 'wrong';
+    r.machines = L.machines.map((m) => ({ ...m, P: m.W / m.t }));
+    return r;
+  }
+  r.F = L.mode === 'lift' ? L.mass * G : v.F;               // แรง (N)
+  r.dist = L.mode === 'lift' ? v.h : v.s;                    // ระยะทาง (m)
+  r.t = v.t != null ? v.t : (L.tShow || 5);                  // เวลา (s)
+  r.f = L.mode === 'push' ? L.mu * L.mass * G : 0;           // แรงเสียดทาน f = μmg
+  r.moves = !(r.F <= 0 || r.F < r.f);                        // แรงน้อยกว่าแรงเสียดทาน → ไม่เคลื่อนที่
+  r.W = r.moves ? r.F * r.dist : 0;                          // งาน W = F × s
+  r.P = r.W / r.t;                                           // กำลัง P = W ÷ t
+  r.endFrac = 1;
+  if (!r.moves) r.kind = 'stuck';
+  else if (L.goal.W != null && !near(r.W, L.goal.W)) r.kind = r.W < L.goal.W ? 'under' : 'over';
+  else if (L.goal.P != null && !near(r.P, L.goal.P)) {
+    r.kind = r.P < L.goal.P ? 'slow' : 'fast';
+    if (r.kind === 'slow') r.endFrac = clamp((r.W / L.goal.P) / r.t, 0.25, 0.95); // ถึงเส้นตายกลางทาง → ระเบิด!
+  }
+  return r;
+}
+function startRun() {
+  if (Fac.phase !== 'idle' || modalOpen()) return;
+  const L = Fac.L;
+  if (L.mode === 'race' && Fac.vals.choice < 0) { toast('🗳️ เลือกคำตอบก่อนนะ!', 'info'); AudioSys.sfx('wrong'); return; }
+  stopCharge();
+  Fac.attempts++; me().attempts++;
+  const o = Fac.out = evaluate(L, Fac.vals);
+  if (L.mode === 'race') Fac.runDur = 4.2;
+  else if (L.vars.t || L.goal.P != null) Fac.runDur = clamp(o.t * 0.42, 1.3, 5.5);
+  else Fac.runDur = o.kind === 'stuck' ? 1.8 : 2.6;
+  Fac.phase = 'run'; Fac.runT = 0; Fac.prog = 0;
+  if (L.machine || L.mode === 'race') AudioSys.sfx('vroom'); else AudioSys.sfx('oof');
+  if (L.mode === 'lift') addFloat('Oof!', Fac.layout.bx - 150, 300, '#ffd23f');
+  if (L.machine || L.mode === 'race') addFloat('Vroom!', 480, 140, '#22e3ff');
+  $$('#ctrl button, #ctrl input').forEach((el) => { el.disabled = true; });
+}
+/** จบแอนิเมชัน → แสดงเอฟเฟกต์ตามผลลัพธ์ และบันทึกสถิติ */
+function finishRun() {
+  const o = Fac.out, Ly = Fac.layout, L = Fac.L;
+  Fac.phase = 'after'; Fac.afterT = 0;
+  const bp = boxPos();
+  switch (o.kind) {
+    case 'success':
+      spawnConfetti(bp.x, bp.y - 40, 70, ['#ffd23f', '#35f28a', '#22e3ff', '#ff3fb4']); spawnCoins(bp.x, bp.y - 40, 14);
+      addFloat('สำเร็จ! 🎉', 480, 120, '#35f28a', 40); AudioSys.sfx('win'); setTimeout(() => AudioSys.sfx('coin'), 500); break;
+    case 'stuck': addFloat('Oof! ไม่ขยับเลย', bp.x, bp.y - 130, '#ffd23f'); AudioSys.sfx('oof'); Fac.showFric = true; break;
+    case 'under': addFloat('งานยังไม่ถึงเป้า 🤔', 480, 120, '#ffd23f'); AudioSys.sfx('oof'); break;
+    case 'over': addFloat('BEEP BEEP! เกินเป้า!', 480, 120, '#ff4d5e', 36); Fac.flash = 1.6; Fac.shake = 8; AudioSys.sfx('beep'); spawnSparks(bp.x, bp.y - 30, 30); break;
+    case 'slow': Fac.boxGone = true; spawnConfetti(bp.x, bp.y - 40, 140, ['#ff3fb4', '#ffd23f', '#22e3ff', '#35f28a', '#9b5cff', '#fff'], 1.25);
+      addFloat('ป๊อป! ส่งไม่ทันเวลา 🎊', 480, 120, '#ff3fb4', 34); Fac.shake = 12; AudioSys.sfx('pop'); break;
+    case 'fast': addFloat('BEEP BEEP! เครื่องร้อนเกิน!', 480, 120, '#ff4d5e', 34); Fac.flash = 1.6; Fac.shake = 6; AudioSys.sfx('beep'); Fac.smokeT = 1.6; break;
+    case 'wrong': addFloat('คำตอบยังไม่ถูก 🤔', 480, 120, '#ffd23f'); AudioSys.sfx('lose'); break;
+  }
+  if (L.mode === 'race' && o.kind === 'success') { spawnConfetti(Ly.fx, 250, 60, ['#ffd23f', '#35f28a', '#22e3ff']); }
+  applyOutcome(o);
+}
+/** หมดเวลากะ */
+function timeOut() {
+  stopCharge(); Fac.attempts++; me().attempts++;
+  Fac.out = { L: Fac.L, kind: 'timeout' }; Fac.phase = 'after'; Fac.afterT = 0;
+  addFloat('หมดเวลากะ! ⏰', 480, 120, '#ff4d5e', 38); AudioSys.sfx('lose');
+  $$('#ctrl button, #ctrl input').forEach((el) => { el.disabled = true; });
+  applyOutcome(Fac.out);
+}
+/** บันทึกผล: ดาว เหรียญ คะแนน สถิติ */
+function applyOutcome(o) {
+  const p = me(), L = Fac.L, ok = o.kind === 'success';
+  const isPower = L.mode === 'race' || (L.goal && L.goal.P != null);
+  if (ok) p.correct++;
+  if (isPower && o.kind !== 'timeout') { p.streak = ok ? p.streak + 1 : 0; p.bestStreak = Math.max(p.bestStreak, p.streak); }
+  o.reward = null;
+  if (ok) {
+    const stars = Fac.attempts === 1 ? 3 : (Fac.attempts === 2 ? (owns('cart') ? 3 : 2) : 1);
+    const rec = levelRec(L.id); const first = rec.clears === 0;
+    let coins = first ? L.reward : Math.round(L.reward * 0.25);
+    if (p.job === L.track) coins *= 1.25;
+    if (owns('gloves')) coins *= 1.2;
+    const timeBonus = Math.floor(Fac.timeLeft / 5);
+    coins = Math.round(coins) + timeBonus;
+    const lvScore = stars * 100 + Math.floor(Fac.timeLeft);
+    const gained = Math.max(0, lvScore - (rec.best || 0));
+    p.levels[L.id] = { stars: Math.max(rec.stars, stars), best: Math.max(rec.best || 0, lvScore), clears: rec.clears + 1 };
+    p.coins += coins; p.totalWork += o.W || 0;
+    if (Fac.timeLeft > Fac.timeMax / 2) p.flags.speed = true;
+    if (L.surface === 'oil') p.flags.oil = true;
+    o.reward = { stars, coins, timeBonus, gained, first };
+  }
+  saveDB(); updateTopbar(); renderChips(); checkBadges();
+}
+/** ตำแหน่งกล่องปัจจุบัน (ใช้สร้างเอฟเฟกต์) */
+function boxPos() {
+  const L = Fac.L, Ly = Fac.layout, o = Fac.out;
+  if (L.mode === 'push') { const d = o && o.moves ? Fac.prog * o.dist : 0; return { x: Ly.x0 + d * Ly.scale + Ly.box / 2, y: Ly.floorY }; }
+  if (L.mode === 'lift') { const d = o && o.moves ? Fac.prog * o.dist : 0; return { x: Ly.bx + Ly.box / 2, y: Ly.floorY - 14 - d * Ly.scale }; }
+  return { x: 480, y: 300 };
+}
+
+/* ---------- หน้าต่างสรุปผล ---------- */
+function showResult() {
+  const o = Fac.out, L = Fac.L, ok = o.kind === 'success';
+  const titles = { success: '🎉 ภารกิจสำเร็จ!', stuck: '😵 Oof! กล่องไม่ขยับ', under: '🤔 งานยังไม่ถึงเป้า', over: '🚨 Beep Beep! งานเกินเป้า',
+    slow: '🎊 ป๊อป! กำลังไม่พอ ส่งไม่ทัน', fast: '🔥 Beep Beep! กำลังเกินกำหนด', wrong: '🤔 ยังไม่ใช่คำตอบที่ถูก', timeout: '⏰ หมดเวลากะ!' };
+  const lines = explainLines(o);
+  const list = levelsOf(L.track), next = list[list.indexOf(L) + 1];
+  let html = `<div class="res-title ${ok ? 'ok' : 'bad'}">${titles[o.kind]}</div>`;
+  if (ok) {
+    const r = o.reward;
+    html += `<div class="stars">${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(3 - r.stars)}</span></div>
+      <div class="reward"><span>🪙 +${r.coins} Coins</span><span>⭐ +${r.gained} คะแนน</span>${r.timeBonus ? `<span>⏱️ โบนัสเวลา +${r.timeBonus}</span>` : ''}</div>`;
+  }
+  html += `<div class="explain">${lines.map((l) => `<div>${l}</div>`).join('')}</div>`;
+  if (ok && L.tip) html += `<div class="tip">📘 <b>เกร็ดความรู้:</b> ${L.tip}</div>`;
+  if (!ok && o.kind !== 'timeout') html += `<div class="tip">💡 ลองใหม่ได้เลย! ${owns('goggles') ? 'กดปุ่มคำใบ้ดูวิธีคิดแบบละเอียดได้ฟรี' : 'ใช้สูตรในแผงควบคุมช่วยคิด'}</div>`;
+  html += `<div class="m-actions">
+    <button class="btn ghost" data-res="retry">🔁 ${ok ? 'เล่นซ้ำ' : 'ลองอีกครั้ง'}</button>
+    ${ok && next ? '<button class="btn orange" data-res="next">➡️ ด่านต่อไป</button>' : ''}
+    ${ok && !next ? '<button class="btn cyan" data-res="shop">🛒 ไปร้านค้า & อาร์เคด</button>' : ''}
+  </div>`;
+  showModal(html, false, () => { if (Fac.phase === 'after') resetAttempt(); });
+  $('#modalCard').querySelectorAll('[data-res]').forEach((b) => b.addEventListener('click', () => {
+    const a = b.dataset.res; AudioSys.sfx('click');
+    if (a === 'next') { loadLevel(next); Fac.phase = 'idle'; }
+    closeModal();
+    if (a === 'shop') goScreen('shop');
+  }));
+}
+/** สร้างคำอธิบายวิธีคิดทีละขั้น */
+function explainLines(o) {
+  const L = o.L, out = [];
+  if (o.kind === 'timeout') return ['หมดเวลาคิดในกะนี้แล้ว ลองคำนวณให้เร็วขึ้นนะ! (ใช้สูตร W = F × s และ P = W ÷ t)'];
+  if (L.mode === 'race') {
+    if (o.kind !== 'success') out.push(`คุณเลือก: “${esc(o.choiceText)}”`);
+    o.machines.forEach((m) => out.push(`${m.name}: P = W ÷ t = ${fmt(m.W)} ÷ ${fmt(m.t)} = <b>${fmt(m.P)} W</b>`));
+    const best = o.machines.reduce((a, b) => (b.P > a.P ? b : a));
+    out.push(`➡️ <b>${best.name}</b> มีกำลังมากกว่า เพราะทำงานได้มากกว่าในเวลา 1 วินาที`);
+    return out;
+  }
+  if (L.mode === 'lift') out.push(`แรงยก F = m × g = ${L.mass} × ${G} = <b>${fmt(o.F)} N</b>`);
+  if (L.mode === 'push') out.push(`แรงเสียดทาน f = μ × m × g = ${L.mu} × ${L.mass} × ${G} = <b>${fmt(o.f)} N</b>`);
+  if (o.kind === 'stuck') {
+    out.push(`คุณออกแรง ${fmt(o.F)} N ซึ่งน้อยกว่าแรงเสียดทาน กล่องจึงไม่เคลื่อนที่ (s = 0 m)`);
+    out.push(`งาน W = F × s = ${fmt(o.F)} × 0 = <b>0 J</b> → ต้องออกแรงมากกว่า ${fmt(o.f)} N`);
+    return out;
+  }
+  const dl = L.mode === 'lift' ? 'h' : 's';
+  out.push(`งาน W = F × ${dl} = ${fmt(o.F)} × ${fmt(o.dist)} = <b>${fmt(o.W)} J</b>${L.goal.W != null ? ` (เป้าหมาย ${fmt(L.goal.W)} J)` : ''}`);
+  const powerLevel = L.goal.P != null;
+  if (powerLevel) out.push(`กำลัง P = W ÷ t = ${fmt(o.W)} ÷ ${fmt(o.t)} = <b>${fmt(o.P)} W</b> (เป้าหมาย ${fmt(L.goal.P)} W)`);
+  const msg = {
+    under: 'งานน้อยกว่าเป้าหมาย ลองเพิ่มแรงหรือระยะทาง',
+    over: 'งานมากกว่าเป้าหมาย ออกแรงหรือระยะทางมากเกินไป',
+    slow: 'กำลังน้อยกว่าเป้าหมาย ทำงานช้าเกินไปจนพัสดุส่งไม่ทันเวลา',
+    fast: 'กำลังมากกว่าเป้าหมาย เครื่องจักรทำงานหนักเกินไปจนร้อนจัด',
+    success: 'ถูกต้อง! ยอดเยี่ยมมาก วิศวกรตัวจิ๋ว!'
+  };
+  out.push('➡️ ' + msg[o.kind]);
+  if (o.kind === 'success' && !powerLevel) out.push(`⭐ ความรู้เสริม: ถ้าใช้เวลา ${fmt(o.t)} s กำลังที่ใช้คือ P = ${fmt(o.W)} ÷ ${fmt(o.t)} = ${fmt(o.P)} W`);
+  return out;
+}
+
+/* ---------- อนุภาค (Confetti, เหรียญ, ประกายไฟ, ควัน) ---------- */
+function spawnConfetti(x, y, n, cols, pw = 1) {
+  for (let i = 0; i < n && Fac.particles.length < 420; i++) {
+    const a = rand(-Math.PI, 0), sp = rand(180, 520) * pw;
+    Fac.particles.push({ t: 'paper', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, life: rand(1.6, 2.6), col: pick(cols), w: rand(6, 12), h: rand(4, 7), r: rand(0, 6), vr: rand(-10, 10) });
+  }
+}
+function spawnCoins(x, y, n) { for (let i = 0; i < n; i++) Fac.particles.push({ t: 'coin', x, y, vx: rand(-200, 200), vy: rand(-520, -280), life: rand(1.2, 1.8), r: 0, vr: rand(4, 9) }); }
+function spawnSparks(x, y, n) { for (let i = 0; i < n; i++) Fac.particles.push({ t: 'spark', x, y, vx: rand(-320, 320), vy: rand(-380, -60), life: rand(0.4, 0.9), col: pick(['#ffd23f', '#ff8a1f', '#fff']) }); }
+function spawnSmoke(x, y) { Fac.particles.push({ t: 'smoke', x: x + rand(-10, 10), y, vx: rand(-20, 20), vy: rand(-70, -40), life: 1.2, r: rand(8, 14) }); }
+function addFloat(text, x, y, col, size = 28) { Fac.floats.push({ text, x, y, col, size, life: 1.8 }); }
+function updateParticles(dt) {
+  const ps = Fac.particles;
+  for (let i = ps.length - 1; i >= 0; i--) {
+    const p = ps[i]; p.life -= dt; if (p.life <= 0) { ps[i] = ps[ps.length - 1]; ps.pop(); continue; }
+    if (p.t === 'paper') { p.vx *= 0.985; p.vy = Math.min(p.vy + 700 * dt, 150); p.r += p.vr * dt; }
+    else if (p.t === 'coin') { p.vy += 900 * dt; p.r += p.vr * dt; }
+    else if (p.t === 'spark') { p.vy += 900 * dt; }
+    else if (p.t === 'smoke') { p.r += 18 * dt; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+  for (let i = Fac.floats.length - 1; i >= 0; i--) { const f = Fac.floats[i]; f.life -= dt; f.y -= 28 * dt; if (f.life <= 0) Fac.floats.splice(i, 1); }
+}
+function drawParticles(c) {
+  for (const p of Fac.particles) {
+    if (p.t === 'paper') { c.save(); c.translate(p.x, p.y); c.rotate(p.r); c.fillStyle = p.col; c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 1.7))); c.restore(); }
+    else if (p.t === 'coin') { const w = Math.abs(Math.cos(p.r)) * 9 + 1; c.fillStyle = '#ffd23f'; c.beginPath(); c.ellipse(p.x, p.y, w, 9, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#b08d0c'; c.fillRect(p.x - w * 0.3, p.y - 4, w * 0.6, 8); }
+    else if (p.t === 'spark') { c.fillStyle = p.col; c.fillRect(p.x - 2, p.y - 2, 4, 4); }
+    else if (p.t === 'smoke') { c.fillStyle = `rgba(160,170,200,${p.life * 0.45})`; c.beginPath(); c.arc(p.x, p.y, p.r, 0, Math.PI * 2); c.fill(); }
+  }
+  c.textAlign = 'center';
+  for (const f of Fac.floats) {
+    c.globalAlpha = clamp(f.life, 0, 1); c.font = `900 ${f.size}px ${FONT}`;
+    c.lineWidth = 6; c.strokeStyle = '#0a0f24'; c.strokeText(f.text, f.x, f.y); c.fillStyle = f.col; c.fillText(f.text, f.x, f.y);
+  }
+  c.globalAlpha = 1;
+}
+
+/* ---------- วาดฉากหลังโรงงาน (วาดครั้งเดียวต่อด่านเพื่อประหยัดพลังเครื่อง) ---------- */
+function resizeGame() {
+  const wrap = $('#stageWrap'); const r = wrap.getBoundingClientRect(); if (!r.width) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (gameCanvas.width !== w || gameCanvas.height !== h) { gameCanvas.width = w; gameCanvas.height = h; bgCanvas.width = w; bgCanvas.height = h; renderBG(); }
+  viewScale = w / VW;
+}
+function renderBG() {
+  if (!Fac.L || !bgCanvas.width) return;
+  const c = bgCtx, L = Fac.L, Ly = Fac.layout;
+  c.setTransform(bgCanvas.width / VW, 0, 0, bgCanvas.height / VH, 0, 0);
+  const g = c.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, '#0b1030'); g.addColorStop(0.7, '#1c1252'); g.addColorStop(1, '#0a0d22');
+  c.fillStyle = g; c.fillRect(0, 0, VW, VH);
+  // แผงผนัง
+  for (let x = 0; x < VW; x += 120) { c.fillStyle = (x / 120) % 2 ? '#17205a' : '#1a2566'; c.fillRect(x, 150, 118, 280); c.fillStyle = '#ffffff10'; for (let k = 0; k < 3; k++) c.fillRect(x + 8, 170 + k * 90, 6, 6); }
+  // หน้าต่าง + เมืองยามค่ำ
+  c.fillStyle = '#0a0f2e'; c.fillRect(30, 30, 900, 100);
+  for (let i = 0; i < 40; i++) { const bx = 30 + i * 23, bh = 20 + ((i * 37) % 60); c.fillStyle = '#141b4a'; c.fillRect(bx, 130 - bh, 20, bh); c.fillStyle = '#ffd23f55'; if (i % 3) c.fillRect(bx + 5, 130 - bh + 8, 4, 4); }
+  c.strokeStyle = '#2e3d86'; c.lineWidth = 6; for (let x = 30; x <= 930; x += 150) { c.beginPath(); c.moveTo(x, 30); c.lineTo(x, 130); c.stroke(); } c.strokeRect(30, 30, 900, 100);
+  // ป้ายนีออน
+  c.save(); c.font = `900 34px ${FONT}`; c.textAlign = 'center'; c.shadowColor = '#ff3fb4'; c.shadowBlur = 18; c.fillStyle = '#ffd0ef';
+  c.fillText('POWER INC.', 480, 92); c.shadowColor = '#22e3ff'; c.font = `800 16px ${FONT}`; c.fillStyle = '#c8f8ff'; c.fillText('THE OVERTIME FACTORY · โรงงานโอเวอร์ไทม์', 480, 118); c.restore();
+  // ท่อ
+  c.fillStyle = '#3b4a8f'; c.fillRect(0, 146, VW, 12); c.fillStyle = '#56689f'; for (let x = 40; x < VW; x += 160) c.fillRect(x, 142, 14, 20);
+  c.strokeStyle = '#22e3ff'; c.globalAlpha = 0.6; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 162); c.lineTo(VW, 162); c.stroke(); c.globalAlpha = 1;
+  // โครงสายพานด้านหลัง
+  c.fillStyle = '#2a2f55'; c.fillRect(0, 232, VW, 16); c.fillStyle = '#1b1f3d'; for (let x = 20; x < VW; x += 140) c.fillRect(x, 248, 10, 60);
+
+  if (L.mode === 'push') {
+    const fy = Ly.floorY;
+    c.fillStyle = '#20264a'; c.fillRect(0, fy, VW, VH - fy);
+    // พื้นผิวตามด่าน
+    const sx = 60, ex = 920;
+    if (L.surface === 'metal') { c.fillStyle = '#5b6386'; c.fillRect(sx, fy, ex - sx, 22); c.fillStyle = '#7a83a8'; for (let x = sx; x < ex; x += 40) { c.fillRect(x, fy, 38, 3); c.fillStyle = '#3e4566'; c.fillRect(x + 4, fy + 10, 3, 3); c.fillStyle = '#7a83a8'; } }
+    else if (L.surface === 'rough') { c.fillStyle = '#6e4d2f'; c.fillRect(sx, fy, ex - sx, 22); for (let i = 0; i < 260; i++) { c.fillStyle = i % 2 ? '#8c6640' : '#4f3520'; c.fillRect(sx + ((i * 97) % (ex - sx)), fy + ((i * 13) % 20), 3, 3); } c.fillStyle = '#a07a50'; for (let x = sx; x < ex; x += 12) c.fillRect(x, fy - 3, 6, 4); }
+    else { c.fillStyle = '#4b5272'; c.fillRect(sx, fy, ex - sx, 22); for (let i = 0; i < 7; i++) { const ox = sx + 40 + i * 120; const gg = c.createLinearGradient(ox, fy, ox + 110, fy); gg.addColorStop(0, '#111522'); gg.addColorStop(0.5, '#2b2f4a'); gg.addColorStop(1, '#111522'); c.fillStyle = gg; c.beginPath(); c.ellipse(ox + 50, fy + 6, 58, 7, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(155,92,255,.6)'; c.lineWidth = 2; c.beginPath(); c.ellipse(ox + 42, fy + 4, 26, 3, 0, 0, Math.PI * 2); c.stroke(); c.strokeStyle = 'rgba(34,227,255,.5)'; c.beginPath(); c.ellipse(ox + 60, fy + 7, 18, 2, 0, 0, Math.PI * 2); c.stroke(); } }
+    // แถบเตือนอันตราย
+    for (let x = 0; x < VW; x += 30) { c.fillStyle = (x / 30) % 2 ? '#ffd23f' : '#1b1b1b'; c.beginPath(); c.moveTo(x, fy + 22); c.lineTo(x + 30, fy + 22); c.lineTo(x + 20, fy + 32); c.lineTo(x - 10, fy + 32); c.closePath(); c.fill(); }
+    // ไม้บรรทัดวัดระยะ (Distance Tracker)
+    const ry = fy + 50; c.strokeStyle = '#c8d0ff'; c.lineWidth = 2; c.beginPath(); c.moveTo(Ly.x0 + Ly.box / 2, ry); c.lineTo(Ly.x0 + Ly.box / 2 + Ly.maxDist * Ly.scale, ry); c.stroke();
+    const stepM = Ly.maxDist > 20 ? 5 : (Ly.maxDist > 10 ? 2 : 1);
+    c.fillStyle = '#c8d0ff'; c.font = `700 12px ${FONT}`; c.textAlign = 'center';
+    for (let m = 0; m <= Ly.maxDist + 0.001; m += 1) { const x = Ly.x0 + Ly.box / 2 + m * Ly.scale; const big = m % stepM === 0; c.fillRect(x - 1, ry - (big ? 8 : 4), 2, big ? 16 : 8); if (big) c.fillText(m + ' m', x, ry + 24); }
+    // สายพานปลายทาง
+    c.fillStyle = '#35f28a33'; c.fillRect(910, fy - 120, 50, 120); c.fillStyle = '#35f28a'; c.font = `900 14px ${FONT}`; c.fillText('ส่งของ', 935, fy - 128);
+  } else if (L.mode === 'lift') {
+    const fy = Ly.floorY;
+    c.fillStyle = '#20264a'; c.fillRect(0, fy, VW, VH - fy); c.fillStyle = '#5b6386'; c.fillRect(0, fy - 14, VW, 14);
+    for (let x = 0; x < VW; x += 30) { c.fillStyle = (x / 30) % 2 ? '#ffd23f' : '#1b1b1b'; c.fillRect(x, fy, 30, 8); }
+    // หอลิฟต์
+    const lx = Ly.bx - 16, rx = Ly.bx + Ly.box + 16;
+    c.fillStyle = '#3b4a8f'; c.fillRect(lx - 8, Ly.topY - 40, 10, fy - Ly.topY + 26); c.fillRect(rx - 2, Ly.topY - 40, 10, fy - Ly.topY + 26);
+    c.strokeStyle = '#56689f'; c.lineWidth = 3;
+    for (let y = fy - 14; y > Ly.topY - 30; y -= 50) { c.beginPath(); c.moveTo(lx, y); c.lineTo(rx, y - 50); c.moveTo(rx, y); c.lineTo(lx, y - 50); c.stroke(); }
+    c.fillStyle = '#56689f'; c.fillRect(lx - 14, Ly.topY - 48, rx - lx + 30, 12);
+    // ชั้นลอยเป้าหมาย
+    c.fillStyle = '#2a356e'; c.fillRect(rx + 10, Ly.topY + 40, 150, 10);
+    // ไม้บรรทัดแนวดิ่ง
+    const rxr = rx + 40, base = fy - 14 - Ly.box * 0; c.strokeStyle = '#c8d0ff'; c.lineWidth = 2; c.beginPath(); c.moveTo(rxr, base); c.lineTo(rxr, base - Ly.maxDist * Ly.scale); c.stroke();
+    const stepM = Ly.maxDist > 10 ? 2 : 1; c.fillStyle = '#c8d0ff'; c.font = `700 12px ${FONT}`; c.textAlign = 'left';
+    for (let m = 0; m <= Ly.maxDist + 0.001; m += 1) { const y = base - m * Ly.scale; const big = m % stepM === 0; c.fillRect(rxr - (big ? 8 : 4), y - 1, big ? 16 : 8, 2); if (big) c.fillText(m + ' m', rxr + 12, y + 4); }
+  } else {
+    // ลู่แข่งเครื่องจักร
+    Ly.lanes.forEach((ly, i) => {
+      c.fillStyle = '#20264a'; c.fillRect(0, ly, VW, i === 1 ? VH - ly : 34);
+      c.fillStyle = '#5b6386'; c.fillRect(40, ly, 880, 14);
+      c.fillStyle = '#ffffff22'; for (let x = 60; x < 900; x += 60) c.fillRect(x, ly + 5, 30, 4);
+    });
+    for (let y = 0; y < 2; y++) for (let k = 0; k < 18; k++) { c.fillStyle = (k + y) % 2 ? '#fff' : '#111'; c.fillRect(Ly.fx + 30 + y * 10, 240 + k * 15, 10, 15); }
+    c.fillStyle = '#fff'; c.font = `900 18px ${FONT}`; c.textAlign = 'center'; c.fillText('🏁 เส้นชัย', Ly.fx + 40, 232);
+  }
+}
+
+/* ---------- วาดแต่ละเฟรม ---------- */
+let gTime = 0;
+function drawFactory(tm) {
+  const c = gctx, L = Fac.L; if (!L || !gameCanvas.width) return;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(bgCanvas, 0, 0);
+  const sx = gameCanvas.width / VW, sy = gameCanvas.height / VH;
+  let shx = 0, shy = 0; if (Fac.shake > 0) { shx = rand(-1, 1) * Fac.shake; shy = rand(-1, 1) * Fac.shake; }
+  c.setTransform(sx, 0, 0, sy, shx * sx, shy * sy);
+  drawAmbient(c, tm);
+  if (L.mode === 'push') drawPushScene(c, tm); else if (L.mode === 'lift') drawLiftScene(c, tm); else drawRaceScene(c, tm);
+  drawParticles(c);
+  if (Fac.flash > 0) { c.fillStyle = `rgba(255,40,60,${0.18 + 0.18 * Math.sin(tm * 25)})`; c.fillRect(-20, -20, VW + 40, VH + 40); }
+  // ข้อความสถานะมุมซ้ายบน
+  c.fillStyle = '#0a0f24cc'; rr(c, 718, 176, 230, 34, 10); c.fill();
+  c.fillStyle = '#fff'; c.font = `800 15px ${FONT}`; c.textAlign = 'left';
+  const status = Fac.phase === 'idle' ? (Fac.charging ? '⚡ กำลังชาร์จแรง...' : '🧠 คิดคำนวณแล้วกด ลงมือ!') : Fac.phase === 'run' ? '🏃 กำลังปฏิบัติงาน...' : '📋 สรุปผลงาน';
+  c.fillText(status, 730, 199);
+}
+/** ของตกแต่งที่ขยับได้: สายพาน กล่องลอย เฟือง ไฟเตือน */
+function drawAmbient(c, tm) {
+  const off = (tm * 60) % 40;
+  c.fillStyle = '#3a4070'; for (let x = -40 + off; x < VW; x += 40) c.fillRect(x, 234, 20, 4);
+  const cols = ['#ff8a1f', '#22e3ff', '#ff3fb4', '#35f28a', '#ffd23f'];
+  for (let i = 0; i < 5; i++) { const x = ((tm * 60 + i * 210) % 1100) - 80; c.fillStyle = cols[i]; rr(c, x, 200, 34, 32, 4); c.fill(); c.fillStyle = '#00000033'; c.fillRect(x + 14, 200, 6, 32); }
+  // กล่องยักษ์ลอยไปมา
+  for (let i = 0; i < 3; i++) {
+    const x = 120 + i * 330 + Math.sin(tm * 0.6 + i) * 40, y = 285 + Math.sin(tm * 1.3 + i * 2) * 14;
+    c.globalAlpha = 0.28; c.fillStyle = cols[(i + 2) % 5]; c.save(); c.translate(x, y); c.rotate(Math.sin(tm + i) * 0.15); rr(c, -26, -26, 52, 52, 6); c.fill(); c.restore(); c.globalAlpha = 1;
+  }
+  // เฟือง
+  [[905, 300, 26], [60, 330, 20]].forEach(([gx, gy, r], i) => {
+    c.save(); c.translate(gx, gy); c.rotate(tm * (i ? -1.2 : 0.9)); c.fillStyle = '#3e4a85';
+    for (let k = 0; k < 8; k++) { c.rotate(Math.PI / 4); c.fillRect(-4, -r - 6, 8, 10); }
+    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill(); c.fillStyle = '#1b2150'; c.beginPath(); c.arc(0, 0, r * 0.4, 0, Math.PI * 2); c.fill(); c.restore();
+  });
+  // ไฟเตือน
+  const on = Math.floor(tm * 2) % 2 === 0 || Fac.flash > 0;
+  c.fillStyle = on ? (Fac.flash > 0 ? '#ff4d5e' : '#ffd23f') : '#4a3a10'; c.beginPath(); c.arc(20, 170, 7, 0, Math.PI * 2); c.arc(940, 170, 7, 0, Math.PI * 2); c.fill();
+}
+/** วาดกล่องพัสดุ (x,y = มุมซ้ายล่าง) */
+function drawBox(c, x, y, size, mass, col, hot) {
+  c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(x + size / 2, y + 2, size * 0.55, 6, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = hot ? '#ff4d5e' : col; rr(c, x, y - size, size, size, 6); c.fill();
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(x + 4, y - size + 4, size - 8, 6);
+  c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(x + size / 2 - 6, y - size, 12, size);
+  c.fillStyle = '#fff'; rr(c, x + size * 0.15, y - size * 0.62, size * 0.7, size * 0.3, 4); c.fill();
+  c.fillStyle = '#111'; c.font = `900 ${Math.round(size * 0.2)}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(mass === '' ? 'PKG' : mass + ' kg', x + size / 2, y - size * 0.47); c.textBaseline = 'alphabetic';
+}
+function charPose(running, moves) {
+  const o = Fac.out;
+  if (Fac.phase === 'idle') return Fac.charging ? 'strain' : 'idle';
+  if (Fac.phase === 'run') return running;
+  if (!o) return 'idle';
+  if (o.kind === 'success') return 'cheer';
+  if (o.kind === 'slow' || o.kind === 'timeout') return 'sad';
+  if (o.kind === 'over' || o.kind === 'fast') return 'strain';
+  return 'scratch';
+}
+function drawPushScene(c, tm) {
+  const L = Fac.L, Ly = Fac.layout, o = Fac.out, av = me().avatar;
+  const d = (Fac.phase !== 'idle' && o && o.moves) ? Fac.prog * o.dist : 0;
+  const stuckShake = Fac.phase === 'run' && o && o.kind === 'stuck' ? Math.sin(tm * 70) * 2 : 0;
+  const bx = Ly.x0 + d * Ly.scale + stuckShake;
+  // เส้นความเร็ว
+  if (Fac.phase === 'run' && o.moves && L.machine) { c.strokeStyle = '#22e3ff88'; c.lineWidth = 3; for (let i = 0; i < 4; i++) { const yy = Ly.floorY - 20 - i * 22; c.beginPath(); c.moveTo(bx - 120 - (tm * 400 + i * 50) % 60, yy); c.lineTo(bx - 70, yy); c.stroke(); } }
+  if (!Fac.boxGone) drawBox(c, bx, Ly.floorY, Ly.box, L.mass, L.boxColor, Fac.flash > 0 && Math.sin(tm * 25) > 0);
+  // ตัวละคร
+  const pose = charPose(o && o.moves ? 'push' : 'strain');
+  const cx = bx - 40;
+  drawAvatar(c, cx, Ly.floorY, 0.8, av, pose, tm, { gold: owns('gloves'), flame: Fac.phase === 'run' && L.machine });
+  if (pose === 'scratch') bubble(c, cx, Ly.floorY - 112, '?');
+  if (Fac.smokeT > 0) { for (let i = 0; i < 2; i++) spawnSmoke(bx + Ly.box / 2, Ly.floorY - Ly.box); }
+  // ตัวชี้ระยะทางบนไม้บรรทัด
+  const mx = Ly.x0 + Ly.box / 2 + d * Ly.scale, ry = Ly.floorY + 50;
+  c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(mx, ry - 10); c.lineTo(mx - 8, ry - 22); c.lineTo(mx + 8, ry - 22); c.closePath(); c.fill();
+  // ลูกศรแรง
+  if (Fac.phase !== 'after') {
+    const F = Fac.vals.F || 0, fmax = L.vars.F.max || F * 1.3 || 1, len = 20 + 90 * (F / fmax);
+    const ay = Ly.floorY - Ly.box - 18;
+    c.strokeStyle = '#ff4d5e'; c.fillStyle = '#ff4d5e'; c.lineWidth = 6; c.beginPath(); c.moveTo(bx + Ly.box / 2 - len / 2, ay); c.lineTo(bx + Ly.box / 2 + len / 2, ay); c.stroke();
+    c.beginPath(); c.moveTo(bx + Ly.box / 2 + len / 2 + 12, ay); c.lineTo(bx + Ly.box / 2 + len / 2 - 2, ay - 10); c.lineTo(bx + Ly.box / 2 + len / 2 - 2, ay + 10); c.closePath(); c.fill();
+    c.font = `900 16px ${FONT}`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = '#0a0f24';
+    const lbl = `F = ${fmt(F)} N`; c.strokeText(lbl, bx + Ly.box / 2, Ly.floorY - Ly.box - 38); c.fillText(lbl, bx + Ly.box / 2, Ly.floorY - Ly.box - 38);
+  }
+}
+function drawLiftScene(c, tm) {
+  const L = Fac.L, Ly = Fac.layout, o = Fac.out, av = me().avatar;
+  const h = (Fac.phase !== 'idle' && o && o.moves) ? Fac.prog * o.dist : 0;
+  const base = Ly.floorY - 14, py = base - h * Ly.scale;
+  const cxp = Ly.bx + Ly.box / 2, pulY = Ly.topY - 26;
+  // รอก
+  c.save(); c.translate(cxp, pulY); c.rotate(h * 2); c.fillStyle = '#9aa6d6'; c.beginPath(); c.arc(0, 0, 16, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#3b4a8f'; c.lineWidth = 3; for (let k = 0; k < 3; k++) { c.rotate(Math.PI / 3); c.beginPath(); c.moveTo(-14, 0); c.lineTo(14, 0); c.stroke(); } c.restore();
+  // เชือก
+  const charX = Ly.bx - 170, handY = Ly.floorY - 14 - 128 * 0.85;
+  c.strokeStyle = '#e8d8a8'; c.lineWidth = 3; c.beginPath(); c.moveTo(cxp, pulY + 16); c.lineTo(cxp, py - Ly.box - 8);
+  c.moveTo(cxp - 16, pulY); c.lineTo(charX, handY); c.stroke();
+  // แท่นยก + กล่อง
+  c.fillStyle = '#56689f'; c.fillRect(Ly.bx - 12, py - 8, Ly.box + 24, 10);
+  c.strokeStyle = '#9aa6d6'; c.lineWidth = 2; c.beginPath(); c.moveTo(Ly.bx - 10, py - 8); c.lineTo(cxp, py - Ly.box - 8); c.lineTo(Ly.bx + Ly.box + 10, py - 8); c.stroke();
+  if (!Fac.boxGone) drawBox(c, Ly.bx, py - 8, Ly.box, L.mass, L.boxColor, Fac.flash > 0 && Math.sin(tm * 25) > 0);
+  // มอเตอร์ (ด่านกำลัง) หรือคนดึง
+  if (L.machine) {
+    c.fillStyle = '#9b5cff'; rr(c, charX - 40, Ly.floorY - 84, 80, 70, 10); c.fill();
+    c.fillStyle = '#0a0f24'; rr(c, charX - 28, Ly.floorY - 74, 56, 22, 5); c.fill();
+    c.fillStyle = Fac.phase === 'run' ? '#35f28a' : '#ffd23f'; c.font = `900 13px ${FONT}`; c.textAlign = 'center'; c.fillText(Fac.phase === 'run' ? 'VROOM!' : 'MOTOR', charX, Ly.floorY - 58);
+    c.save(); c.translate(charX, Ly.floorY - 30); c.rotate(Fac.phase === 'run' ? tm * 12 : 0); c.fillStyle = '#ffd23f'; c.fillRect(-12, -3, 24, 6); c.fillRect(-3, -12, 6, 24); c.restore();
+    if (Fac.smokeT > 0) spawnSmoke(charX, Ly.floorY - 90);
+    drawAvatar(c, charX - 90, Ly.floorY - 14, 0.75, av, charPose('idle'), tm, { gold: owns('gloves') });
+  } else {
+    const pose = charPose('pull');
+    drawAvatar(c, charX, Ly.floorY - 14, 0.85, av, pose, tm, { gold: owns('gloves') });
+    if (pose === 'scratch') bubble(c, charX, Ly.floorY - 14 - 120, '?');
+  }
+  // ตัวชี้ความสูง
+  const rxr = Ly.bx + Ly.box + 56; c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(rxr - 6, base - h * Ly.scale); c.lineTo(rxr - 18, base - h * Ly.scale - 8); c.lineTo(rxr - 18, base - h * Ly.scale + 8); c.closePath(); c.fill();
+  c.font = `900 16px ${FONT}`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = '#0a0f24'; c.fillStyle = '#ff4d5e';
+  const lbl = `F = mg = ${fmt(L.mass * G)} N ↑`; c.strokeText(lbl, cxp, py - Ly.box - 22); c.fillText(lbl, cxp, py - Ly.box - 22);
+}
+/** หุ่นยนต์/รถยกสำหรับด่านแข่ง */
+function drawRobot(c, x, y, col, label, tm, moving) {
+  c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(x, y + 2, 50, 6, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = col; rr(c, x - 50, y - 52, 76, 36, 8); c.fill();
+  c.fillStyle = shade(col, -50); rr(c, x - 40, y - 82, 40, 32, 6); c.fill();
+  c.fillStyle = '#0a0f24'; c.fillRect(x - 34, y - 76, 28, 14); c.fillStyle = '#22e3ff'; c.fillRect(x - 30, y - 72, 6, 6); c.fillRect(x - 18, y - 72, 6, 6);
+  c.fillStyle = '#fff'; c.font = `900 18px ${FONT}`; c.textAlign = 'center'; c.fillText(label, x - 12, y - 27);
+  [x - 34, x + 12].forEach((wx) => { c.save(); c.translate(wx, y - 12); c.rotate(moving ? tm * 14 : 0); c.fillStyle = '#1b1b1b'; c.beginPath(); c.arc(0, 0, 12, 0, Math.PI * 2); c.fill(); c.fillStyle = '#9aa6d6'; c.fillRect(-2, -10, 4, 20); c.restore(); });
+  if (moving && Math.random() < 0.3) Fac.particles.push({ t: 'smoke', x: x - 56, y: y - 30, vx: -40, vy: -30, life: 0.8, r: 6 });
+}
+function drawRaceScene(c, tm) {
+  const L = Fac.L, Ly = Fac.layout, o = Fac.out;
+  const simT = Fac.phase === 'idle' ? 0 : Fac.prog * Ly.maxT;
+  L.machines.forEach((m, i) => {
+    const ly = Ly.lanes[i], frac = Math.min(simT / m.t, 1);
+    const x = Ly.sx + frac * (Ly.fx - Ly.sx - 60);
+    drawBox(c, x + 30, ly, 56, '', m.color, false);
+    drawRobot(c, x, ly, m.color, String.fromCharCode(65 + i), tm, Fac.phase === 'run' && frac < 1);
+    c.font = `900 16px ${FONT}`; c.textAlign = 'left'; c.lineWidth = 4; c.strokeStyle = '#0a0f24'; c.fillStyle = '#fff';
+    const lbl = `${m.name} · t = ${fmt(Math.min(simT, m.t).toFixed(1))} s${frac >= 1 ? ' ✅' : ''}`;
+    c.strokeText(lbl, 40, ly - 96); c.fillText(lbl, 40, ly - 96);
+    if (Fac.phase === 'after') { const t2 = `P = ${fmt(m.W)} ÷ ${m.t} = ${fmt(m.W / m.t)} W`; c.fillStyle = '#ffd23f'; c.strokeText(t2, 400, ly - 96); c.fillText(t2, 400, ly - 96); }
+  });
+  const pose = charPose('idle');
+  drawAvatar(c, 70, 536, 0.5, me().avatar, pose, tm, { gold: owns('gloves') });
+  if (pose === 'scratch') bubble(c, 70, 536 - 70, '?');
+}
+
+/* ---------- อัปเดตตรรกะต่อเฟรม ---------- */
+function updateFactory(dt) {
+  const L = Fac.L; if (!L) return;
+  if (Fac.flash > 0) Fac.flash -= dt;
+  if (Fac.shake > 0) Fac.shake = Math.max(0, Fac.shake - dt * 25);
+  if (Fac.smokeT > 0) Fac.smokeT -= dt;
+  updateParticles(dt);
+  if (modalOpen()) return;
+  if (Fac.phase === 'idle') {
+    Fac.timeLeft -= dt; if (Fac.timeLeft <= 0) { Fac.timeLeft = 0; timeOut(); return; }
+    if (Fac.charging) {
+      const v = L.vars.F; Fac.chargeAcc += dt;
+      while (Fac.chargeAcc > 0.055) {
+        Fac.chargeAcc -= 0.055;
+        if (Fac.vals.F >= v.max) { stopCharge(); AudioSys.sfx('beep'); addFloat('Beep Beep! แรงเต็มหลอด!', 480, 140, '#ff4d5e', 26); break; }
+        setVar('F', Fac.vals.F + v.step); AudioSys.sfx('tick', Fac.vals.F / v.max);
+      }
+    }
+  } else if (Fac.phase === 'run') {
+    Fac.runT += dt; let p = Fac.runT / Fac.runDur; const end = Fac.out.endFrac || 1;
+    if (p >= end) { p = end; Fac.prog = p; finishRun(); } else Fac.prog = p;
+  } else if (Fac.phase === 'after') {
+    Fac.afterT += dt; if (Fac.afterT > 1.5 && !modalOpen() && !Fac._shown) { Fac._shown = true; showResult(); }
+  }
+  if (Fac.phase !== 'after') Fac._shown = false;
+}
+/** อัปเดตหลอดพลังงาน/มาตรวัดใต้ฉาก (เปลี่ยน DOM เฉพาะเมื่อค่าเปลี่ยน) */
+function setTxt(id, v) { const el = document.getElementById(id); if (el._v !== v) { el._v = v; el.textContent = v; } }
+function updateMeters() {
+  const L = Fac.L, o = Fac.out; if (!L) return;
+  setTxt('hudTime', Math.ceil(Fac.timeLeft) + ' s');
+  const tf = Fac.timeLeft / Fac.timeMax, bar = $('#hudTimeBar');
+  bar.style.width = (tf * 100).toFixed(1) + '%'; bar.style.background = tf > 0.5 ? 'var(--green)' : tf > 0.2 ? 'var(--yellow)' : 'var(--red)';
+  if (L.mode === 'race') {
+    const simT = Fac.phase === 'idle' ? 0 : Fac.prog * Fac.layout.maxT;
+    setTxt('mF', '—'); setTxt('mS', '—'); setTxt('mT', simT.toFixed(1) + ' s');
+    setTxt('mW', L.machines.map((m) => fmt(m.W)).join(' / ') + ' J'); setTxt('mP', Fac.phase === 'after' ? L.machines.map((m) => fmt(m.W / m.t)).join(' / ') + ' W' : '? W');
+    setTxt('mWg', 'A / B'); setTxt('mPg', 'A / B'); $('#eFill').style.width = '0%'; $('#eFric').style.display = 'none';
+    return;
+  }
+  const F = L.mode === 'lift' ? L.mass * G : Fac.vals.F;
+  const fmax = L.mode === 'lift' ? F * 1.25 : (L.vars.F.max || F * 1.25);
+  const ef = $('#eFill'); ef.style.width = clamp(F / fmax * 100, 0, 100).toFixed(1) + '%';
+  ef.style.backgroundPosition = '0 0';
+  const fr = $('#eFric');
+  if (L.mode === 'push' && Fac.showFric) { fr.style.display = 'block'; fr.style.left = clamp(L.mu * L.mass * G / fmax * 100, 0, 100) + '%'; } else fr.style.display = 'none';
+  setTxt('mF', fmt(F) + ' N');
+  let d = 0, t = 0;
+  if (Fac.phase !== 'idle' && o && o.kind !== 'timeout') { d = o.moves ? Fac.prog * o.dist : 0; t = Fac.prog * o.t; }
+  const W = (o && o.moves !== false) ? F * d : 0, P = t > 0 ? W / t : 0;
+  setTxt('mS', fmt(d) + ' m'); setTxt('mSl', L.mode === 'lift' ? '📐 ความสูง h' : '📏 ระยะทาง s'); setTxt('mT', t.toFixed(1) + ' s'); setTxt('mW', fmt(W) + ' J'); setTxt('mP', fmt(P) + ' W');
+  setTxt('mWg', L.goal.W != null ? 'เป้าหมาย ' + fmt(L.goal.W) + ' J' : '');
+  setTxt('mPg', L.goal.P != null ? 'เป้าหมาย ' + fmt(L.goal.P) + ' W' : '');
+}
+
+/* =====================================================================
+   9) ฉากที่ 3: ร้านค้า, ถ้วยรางวัล, อาร์เคด
+   ===================================================================== */
+function renderShop() {
+  const p = me();
+  $('#shopCoins').textContent = p.coins.toLocaleString('th-TH');
+  $('#items').innerHTML = SHOP_ITEMS.map((it) => {
+    const got = owns(it.id);
+    const equipKey = it.hat ? 'hat' : (it.acc ? 'acc' : null), equipVal = it.hat || it.acc;
+    const equipped = equipKey && p.avatar[equipKey] === equipVal;
+    let btn;
+    if (!got) btn = `<button class="btn sm yellow" data-buy="${it.id}" ${p.coins < it.price ? 'disabled' : ''}>🪙 ${it.price} ซื้อ</button>`;
+    else if (equipKey) btn = `<button class="btn sm ${equipped ? 'ghost' : 'cyan'}" data-equip="${it.id}">${equipped ? '✔ ใส่อยู่ (ถอด)' : '👕 สวมใส่'}</button>`;
+    else btn = `<button class="btn sm ghost" disabled>✔ มีแล้ว (ใช้งานอัตโนมัติ)</button>`;
+    return `<div class="item"><div class="ic">${it.icon}</div><span class="tag">${it.type === 'upgrade' ? '⚙️ อัปเกรด' : '✨ ของแต่งตัว'}</span><b>${it.name}</b><p>${it.desc}</p>${btn}</div>`;
+  }).join('');
+  $('#badges').innerHTML = BADGES.map((b) => { const got = p.badges.includes(b.id); return `<div class="badge ${got ? 'got' : 'lock'}"><div class="bi">${b.icon}</div><b>${b.name}</b><small>${b.desc}</small></div>`; }).join('');
+  renderBoard();
+}
+function bindShop() {
+  $('#items').addEventListener('click', (e) => {
+    const p = me(), b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.buy) {
+      const it = SHOP_ITEMS.find((x) => x.id === b.dataset.buy); if (p.coins < it.price || owns(it.id)) return;
+      p.coins -= it.price; p.owned.push(it.id);
+      if (it.hat) p.avatar.hat = it.hat; if (it.acc) p.avatar.acc = it.acc;
+      saveDB(); AudioSys.sfx('buy'); toast(`🛍️ ได้รับ <b>${it.name}</b> แล้ว!`); checkBadges(); renderShop(); updateTopbar();
+    } else if (b.dataset.equip) {
+      const it = SHOP_ITEMS.find((x) => x.id === b.dataset.equip), key = it.hat ? 'hat' : 'acc', val = it.hat || it.acc;
+      p.avatar[key] = p.avatar[key] === val ? (key === 'hat' ? 'hardhat' : 'none') : val; saveDB(); AudioSys.sfx('click'); renderShop();
+    }
+  });
+}
+/** ตรวจเงื่อนไขถ้วยรางวัล */
+function checkBadges() {
+  const p = me(), earned = [];
+  const give = (id) => { if (!p.badges.includes(id)) { p.badges.push(id); earned.push(id); } };
+  const allTrack = (tr) => levelsOf(tr).every((l) => (p.levels[l.id] || {}).stars > 0);
+  if (clearedCount(p) >= 1) give('first');
+  if (p.bestStreak >= 5) give('physicsgod');
+  if (p.totalWork >= 10000) give('heavylifter');
+  if (p.flags.speed) give('speed');
+  if (p.flags.oil) give('oil');
+  if (p.owned.length >= 3) give('shopper');
+  if (p.arcadeBest >= 10) give('arcade');
+  if (allTrack('work')) give('workmaster');
+  if (allTrack('power')) give('powerracer');
+  if (LEVELS.every((l) => (p.levels[l.id] || {}).stars === 3)) give('perfect');
+  if (earned.length) saveDB();
+  earned.forEach((id, i) => setTimeout(() => { const b = BADGES.find((x) => x.id === id); toast(`🏆 ได้ถ้วยรางวัลใหม่!<br>${b.icon} <b>${b.name}</b><br><small>${b.desc}</small>`); AudioSys.sfx('badge'); }, 600 + i * 1000));
+}
+
+/**
+ * ARCADE_TYPES: รูปแบบโจทย์สุ่มในโหมดอาร์เคด
+ * แต่ละฟังก์ชันคืนค่า { q: คำถาม, a: คำตอบ (ตัวเลข), unit: หน่วย, power: true ถ้าเป็นโจทย์กำลัง }
+ */
+const ARCADE_TYPES = [
+  () => { const F = ri(2, 20) * 10, s = ri(2, 15); return { q: `ออกแรง ${F} N ผลักกล่องไปได้ ${s} m งานที่ทำมีค่าเท่าใด?`, a: F * s, unit: 'J' }; },
+  () => { const F = ri(2, 20) * 10, s = ri(2, 15); return { q: `ทำงาน ${fmt(F * s)} J โดยลากของไปได้ ${s} m ต้องออกแรงเท่าใด?`, a: F, unit: 'N' }; },
+  () => { const F = ri(2, 20) * 10, s = ri(2, 15); return { q: `ออกแรง ${F} N ทำงานได้ ${fmt(F * s)} J วัตถุเคลื่อนที่ได้กี่เมตร?`, a: s, unit: 'm' }; },
+  () => { const m = ri(1, 10) * 5, h = ri(1, 10); return { q: `ยกกล่องมวล ${m} kg ขึ้นสูง ${h} m (g = 10 m/s²) ทำงานเท่าใด?`, a: m * G * h, unit: 'J' }; },
+  () => { const t = ri(2, 10), P = ri(1, 12) * 50; return { q: `เครื่องจักรทำงาน ${fmt(P * t)} J ในเวลา ${t} s มีกำลังเท่าใด?`, a: P, unit: 'W', power: true }; },
+  () => { const t = ri(2, 10), P = ri(1, 12) * 50; return { q: `มอเตอร์กำลัง ${P} W ต้องทำงาน ${fmt(P * t)} J ใช้เวลากี่วินาที?`, a: t, unit: 's', power: true }; },
+  () => { const t = ri(2, 10), P = ri(1, 12) * 50; return { q: `เครื่องยกกำลัง ${P} W ทำงานนาน ${t} s ได้งานเท่าใด?`, a: P * t, unit: 'J', power: true }; },
+  () => { const F = ri(1, 10) * 50, s = ri(2, 10), t = ri(2, 5); return { q: `หุ่นยนต์ออกแรง ${F} N ดันของไป ${s} m ใช้เวลา ${t} s มีกำลังเท่าใด?`, a: Math.round(F * s / t * 100) / 100, unit: 'W', power: true }; }
+];
+const Arcade = { on: false, time: 60, score: 0, combo: 0, q: null, lock: false };
+function makeChoices(a) {
+  const set = new Set([a]);
+  const c = [a * 2, Math.round(a / 2 * 100) / 100, a * 10, a + (a >= 100 ? 50 : 1), Math.round(a * 1.5 * 100) / 100, a - (a > 100 ? 100 : 1)];
+  shuffle(c).forEach((v) => { if (set.size < 4 && v > 0 && v !== a) set.add(v); });
+  let guard = 0; while (set.size < 4 && guard++ < 50) set.add(a + ri(1, 20) * (a >= 50 ? 10 : 1));
+  return shuffle([...set]);
+}
+function nextQuestion() {
+  const q = Arcade.q = pick(ARCADE_TYPES)(); Arcade.lock = false;
+  $('#arcQ').textContent = q.q;
+  $('#arcChoices').innerHTML = makeChoices(q.a).map((v) => `<button class="btn ghost" data-ans="${v}">${fmt(v)} ${q.unit}</button>`).join('');
+}
+function startArcade() {
+  Object.assign(Arcade, { on: true, time: 60, score: 0, combo: 0 });
+  $('#arcIdle').style.display = 'none'; $('#arcPlay').style.display = 'block';
+  $('#arcScore').textContent = 0; $('#arcCombo').textContent = 0; AudioSys.playSong('factory'); nextQuestion();
+}
+function answerArcade(v, btn) {
+  if (!Arcade.on || Arcade.lock) return; Arcade.lock = true;
+  const p = me(), q = Arcade.q, ok = Math.abs(v - q.a) < 1e-6;
+  p.attempts++;
+  if (ok) { p.correct++; Arcade.score++; Arcade.combo++; Arcade.time = Math.min(60, Arcade.time + (Arcade.combo % 3 === 0 ? 3 : 0)); btn.className = 'btn'; AudioSys.sfx('correct'); }
+  else { Arcade.combo = 0; btn.className = 'btn pink'; AudioSys.sfx('wrong'); $$('#arcChoices button').forEach((b) => { if (Math.abs(+b.dataset.ans - q.a) < 1e-6) b.className = 'btn'; }); }
+  if (q.power) { p.streak = ok ? p.streak + 1 : 0; p.bestStreak = Math.max(p.bestStreak, p.streak); }
+  $('#arcScore').textContent = Arcade.score; $('#arcCombo').textContent = Arcade.combo;
+  checkBadges();
+  setTimeout(() => { if (Arcade.on) nextQuestion(); }, ok ? 450 : 1100);
+}
+function updateArcade(dt) {
+  Arcade.time -= dt; if (Arcade.time <= 0) { endArcade(false); return; }
+  setTxt('arcTime', Math.ceil(Arcade.time)); $('#arcBar').style.width = (Arcade.time / 60 * 100).toFixed(1) + '%';
+}
+function endArcade(silent) {
+  if (!Arcade.on) return; Arcade.on = false;
+  const p = me(), sc = Arcade.score, coins = sc * 2 + Math.floor(sc / 5) * 5;
+  p.coins += coins; p.arcadeBest = Math.max(p.arcadeBest, sc); p.arcadeTotal = (p.arcadeTotal || 0) + sc;
+  DB.board.push({ name: p.name, score: sc, ts: Date.now() }); DB.board.sort((a, b) => b.score - a.score); DB.board = DB.board.slice(0, 10);
+  saveDB(); checkBadges(); updateTopbar();
+  $('#arcIdle').style.display = 'block'; $('#arcPlay').style.display = 'none';
+  if (!silent) {
+    AudioSys.sfx('win'); AudioSys.playSong('lobby');
+    showModal(`<div class="res-title ok">🕹️ หมดเวลา!</div><div class="reward"><span>✅ ตอบถูก ${sc} ข้อ</span><span>🪙 +${coins} Coins</span><span>🏅 สถิติสูงสุด ${p.arcadeBest}</span></div>
+      <p class="tip">ส่งเครื่องให้เพื่อนเล่นต่อ (สลับผู้เล่นที่ล็อบบี้) แล้วมาดูกันว่าใครคือวิศวกรที่คิดเร็วที่สุด!</p>
+      <div class="m-actions"><button class="btn pink" id="arcAgain">🔁 เล่นอีกรอบ</button><button class="btn ghost" id="arcClose">ปิด</button></div>`);
+    $('#arcAgain').addEventListener('click', () => { closeModal(); startArcade(); });
+    $('#arcClose').addEventListener('click', closeModal);
+    renderShop();
+  }
+}
+function renderBoard() {
+  if (!DB.board.length) { $('#board').innerHTML = '<p class="muted">ยังไม่มีสถิติ มาเป็นคนแรกกันเลย!</p>'; return; }
+  $('#board').innerHTML = `<table class="lb"><tr><th>#</th><th>ชื่อ</th><th>ตอบถูก</th></tr>${DB.board.map((r, i) =>
+    `<tr class="${r.name === DB.current ? 'me' : ''}"><td>${['🥇', '🥈', '🥉'][i] || i + 1}</td><td>${esc(r.name)}</td><td>${r.score}</td></tr>`).join('')}</table>`;
+}
+
+/* =====================================================================
+   10) Dashboard สถิติผู้เล่น
+   ===================================================================== */
+function showDashboard() {
+  const p = me(), acc = p.attempts ? Math.round(p.correct / p.attempts * 100) : 0;
+  const cards = [['⭐ คะแนนรวม', totalScore(p).toLocaleString('th-TH')], ['🪙 Power Coins', p.coins.toLocaleString('th-TH')],
+    ['✅ ด่านที่ผ่าน', `${clearedCount(p)} / ${LEVELS.length}`], ['🌟 ดาวสะสม', `${totalStars(p)} / ${LEVELS.length * 3}`],
+    ['🛠️ งานสะสม', fmt(p.totalWork) + ' J'], ['🎯 ความแม่นยำ', acc + '%'], ['🔥 ตอบกำลังถูกติดกันสูงสุด', p.bestStreak],
+    ['🕹️ อาร์เคดสูงสุด', p.arcadeBest + ' ข้อ'], ['🏆 ถ้วยรางวัล', `${p.badges.length} / ${BADGES.length}`]];
+  const rows = LEVELS.map((L) => { const r = levelRec(L.id); return `<tr><td>${L.track === 'work' ? '💪' : '⚡'} ${L.name}</td><td style="color:var(--yellow)">${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}</td><td>${r.best || '-'}</td><td>${r.clears || 0}</td></tr>`; }).join('');
+  const players = Object.values(DB.players).sort((a, b) => totalScore(b) - totalScore(a));
+  const prow = players.map((q, i) => { const a = q.attempts ? Math.round(q.correct / q.attempts * 100) : 0;
+    return `<tr class="${q.name === DB.current ? 'me' : ''}"><td>${['🥇', '🥈', '🥉'][i] || i + 1}</td><td>${esc(q.name)}</td><td>${totalScore(q)}</td><td>${clearedCount(q)}/${LEVELS.length}</td><td>${totalStars(q)}</td><td>${fmt(q.totalWork)}</td><td>${a}%</td><td>${q.arcadeBest}</td><td>${q.badges.length}</td></tr>`; }).join('');
+  const time = curScreen === 'factory' && Fac.L ? `<p class="muted" style="font-weight:700">⏱️ เวลากะที่เหลือในด่าน “${Fac.L.name}”: ${Math.ceil(Fac.timeLeft)} วินาที</p>` : '';
+  showModal(`<div class="res-title" style="color:var(--cyan)">📊 Dashboard: ${esc(p.name)}</div>${time}
+    <div class="dash-cards">${cards.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>
+    <h4 style="color:var(--cyan);margin:8px 0">📋 ผลรายด่าน</h4>
+    <div class="table-wrap"><table class="lb"><tr><th>ด่าน</th><th>ดาว</th><th>คะแนนสูงสุด</th><th>ผ่าน (ครั้ง)</th></tr>${rows}</table></div>
+    <h4 style="color:var(--cyan);margin:14px 0 6px">👥 ตารางอันดับนักเรียนทุกคนในเครื่องนี้</h4>
+    <div class="table-wrap"><table class="lb"><tr><th>#</th><th>ชื่อ</th><th>คะแนน</th><th>ด่าน</th><th>ดาว</th><th>งาน (J)</th><th>แม่นยำ</th><th>อาร์เคด</th><th>ถ้วย</th></tr>${prow}</table></div>
+    <div class="m-actions"><button class="btn ghost" id="dashReset">🗑️ ล้างข้อมูลผู้เล่นนี้</button><button class="btn cyan" id="dashClose">ปิด</button></div>`, true);
+  $('#dashClose').addEventListener('click', closeModal);
+  $('#dashReset').addEventListener('click', () => {
+    if (!confirm(`ล้างข้อมูลทั้งหมดของ “${p.name}” ใช่ไหม? (ย้อนกลับไม่ได้)`)) return;
+    DB.players[p.name] = newProfile(p.name); DB.board = DB.board.filter((r) => r.name !== p.name); saveDB(); closeModal(); updateTopbar();
+    Fac.L = null; if (curScreen === 'factory') renderFactory(); if (curScreen === 'lobby') renderLobby(); if (curScreen === 'shop') renderShop();
+  });
+}
+
+/* =====================================================================
+   11) เริ่มเกม: ผูกปุ่ม, คีย์บอร์ด, ลูปหลัก
+   ===================================================================== */
+function bindGlobal() {
+  $('#btnStart').addEventListener('click', () => { AudioSys.init(); AudioSys.playSong('lobby'); goScreen('lobby'); });
+  document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) { AudioSys.init(); AudioSys.sfx('click'); goScreen(g.dataset.go); } });
+  $('#btnSound').addEventListener('click', () => { AudioSys.init(); const on = AudioSys.toggle(); $('#btnSound').textContent = on ? '🔊' : '🔇'; });
+  $('#btnDash').addEventListener('click', () => { AudioSys.sfx('click'); showDashboard(); });
+  $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+  $('#trackTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-track]'); if (!b || Fac.phase === 'run') return; Fac.track = b.dataset.track; Fac.L = null; AudioSys.sfx('click'); renderFactory(); });
+  $('#chips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-lv]'); if (!b || Fac.phase === 'run') return;
+    const L = LEVELS.find((l) => l.id === b.dataset.lv);
+    if (!isUnlocked(L)) { toast('🔒 ผ่านด่านก่อนหน้าก่อนนะ!', 'info'); AudioSys.sfx('wrong'); return; }
+    AudioSys.sfx('click'); loadLevel(L);
+  });
+  $('#btnArcade').addEventListener('click', () => { AudioSys.sfx('click'); startArcade(); });
+  $('#arcChoices').addEventListener('click', (e) => { const b = e.target.closest('[data-ans]'); if (b) answerArcade(+b.dataset.ans, b); });
+  // คีย์บอร์ด: Enter = ลงมือ, Space ค้าง = ชาร์จแรง, H = คำใบ้, M = ปิดเสียง, Esc = ปิดหน้าต่าง
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+    if (e.key === 'Escape' && modalOpen()) { closeModal(); return; }
+    if (e.key === 'm' || e.key === 'M') { $('#btnSound').click(); return; }
+    if (curScreen === 'splash' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('#btnStart').click(); return; }
+    if (curScreen !== 'factory' || modalOpen()) return;
+    if (e.key === 'Enter') { e.preventDefault(); startRun(); }
+    else if (e.key === ' ') { e.preventDefault(); if (!e.repeat) startCharge(); }
+    else if (e.key === 'h' || e.key === 'H') showHint(false);
+  });
+  document.addEventListener('keyup', (e) => { if (e.key === ' ') stopCharge(); });
+  window.addEventListener('blur', stopCharge);
+  if (window.ResizeObserver) new ResizeObserver(resizeGame).observe($('#stageWrap')); else window.addEventListener('resize', resizeGame);
+}
+// ลูปหลัก (requestAnimationFrame) — วาดเฉพาะฉากที่กำลังแสดงเพื่อให้ได้ 30–60 FPS บนเครื่องระดับกลาง
+let last = performance.now(), fpsT = 0, fpsN = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, 0.1); last = now; gTime += dt;
+  fpsT += dt; fpsN++; if (fpsT >= 0.5) { setTxt('fps', 'FPS ' + Math.round(fpsN / fpsT)); fpsT = 0; fpsN = 0; }
+  if (curScreen === 'factory') { updateFactory(dt); drawFactory(gTime); updateMeters(); }
+  else if (curScreen === 'lobby') drawLobbyAvatar(gTime, dt);
+  else if (curScreen === 'shop' && Arcade.on && !modalOpen()) updateArcade(dt);
+}
+loadDB(); bindGlobal(); bindLobby(); bindShop(); updateTopbar();
+requestAnimationFrame(loop);
+// เปิดให้ทดสอบ/ดีบักจากคอนโซลได้: window.PowerInc
+window.PowerInc = { LEVELS, Fac, DB, evaluate, goScreen, loadLevel, startRun };
+})();
+</script>
+</body>
+</html>
